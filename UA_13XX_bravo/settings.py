@@ -53,7 +53,14 @@ INSTALLED_APPS = [
     "projects",
     "communications",
     "dashboard",
+    "rest_framework",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
 ]
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -91,7 +98,8 @@ WSGI_APPLICATION = "UA_13XX_bravo.wsgi.application"
 
 from dotenv import load_dotenv
 
-dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+
+dotenv_path = os.path.join(BASE_DIR, ".env")
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 else:
