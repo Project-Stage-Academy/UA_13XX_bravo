@@ -147,6 +147,9 @@ DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 # Set the SECRET_KEY setting from the environment variable DJANGO_SECRET_KEY
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", SECRET_KEY)
 
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
 # Set local settings
 try:
     from .local_settings import *
