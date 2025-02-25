@@ -1,5 +1,7 @@
-#!/bin/bash
+# instructions to make script executable.
+# chmod +x check_django_files.sh
 
+#!/bin/bash
 # List of directories to check (modify as needed)
 DIRECTORIES=("communications" "dashboard" "profiles" "projects" "users")
 
@@ -16,7 +18,13 @@ for dir in "${DIRECTORIES[@]}"; do
         for file in "${REQUIRED_FILES[@]}"; do
             if [ ! -f "$dir/$file" ]; then
                 echo "Creating missing file: $dir/$file"
-                touch "$dir/$file"
+                case "$file" in
+                    "models.py") echo "from django.db import models" > "$dir/$file" ;;
+                    "views.py") echo "from rest_framework.views import APIView" > "$dir/$file" ;;
+                    "serializers.py") echo "from rest_framework import serializers" > "$dir/$file" ;;
+                    "urls.py") echo "from django.urls import path" > "$dir/$file" ;;
+                    "permissions.py") echo "from rest_framework.permissions import BasePermission" > "$dir/$file" ;;
+                esac
             fi
         done
     else
