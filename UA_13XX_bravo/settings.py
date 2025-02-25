@@ -96,17 +96,6 @@ WSGI_APPLICATION = "UA_13XX_bravo.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-from dotenv import load_dotenv
-
-
-dotenv_path = os.path.join(BASE_DIR, ".env")
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
-else:
-    raise RuntimeError(
-        "Missing .env file! Ensure the environment variables are set properly."
-    )
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",

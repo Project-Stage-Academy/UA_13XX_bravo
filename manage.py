@@ -4,8 +4,21 @@ import os
 import sys
 from django.core.exceptions import ImproperlyConfigured
 
+from dotenv import load_dotenv
+
 
 def main():
+
+    from dotenv import load_dotenv
+
+    dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(dotenv_path):
+        load_dotenv(dotenv_path)
+    else:
+        raise RuntimeError(
+            "Missing .env file! Ensure the environment variables are set properly."
+        )
+
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "UA_13XX_bravo.settings")
 
