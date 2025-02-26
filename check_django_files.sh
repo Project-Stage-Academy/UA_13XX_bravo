@@ -1,17 +1,22 @@
-#!/bin/bash
+# instructions to make script executable.
+# chmod +x check_django_files.sh
+# ./check_django_files.sh
 
+#!/bin/bash
 # List of directories to check (modify as needed)
-DIRECTORIES=("communications" "dashboard" "profiles" "projects" "users")
+DIRECTORIES=("communications" "dashboard" "profiles" "projects" "users" )
 
 # List of required files in each directory
 REQUIRED_FILES=("models.py" "views.py" "serializers.py" "urls.py" "permissions.py")
 
 # Loop through each directory in the list
 for dir in "${DIRECTORIES[@]}"; do
-    # Check if the directory exists
-    if [ -d "$dir" ]; then
-        echo "Checking directory: $dir"
-        
+        # Ensure the directory exists before checking for files
+        if [ ! -d "$dir" ]; then
+            echo "Creating missing directory: $dir"
+            mkdir -p "$dir"
+        fi
+
         # Loop through required files
         for file in "${REQUIRED_FILES[@]}"; do
             if [ ! -f "$dir/$file" ]; then
@@ -25,9 +30,6 @@ for dir in "${DIRECTORIES[@]}"; do
                 esac
             fi
         done
-    else
-        echo "Directory not found: $dir"
-    fi
 done
 
 echo "Check completed!"

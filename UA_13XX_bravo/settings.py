@@ -26,9 +26,11 @@ if not SECRET_KEY:
     raise ValueError("Missing DJANGO_SECRET_KEY environment variable")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
@@ -106,6 +108,7 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
+DATABASES["default"]["CONN_MAX_AGE"] = 600
 
 
 # Password validation
