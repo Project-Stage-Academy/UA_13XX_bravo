@@ -23,6 +23,3 @@ COPY . .
 
 # Expose the port for Django
 EXPOSE 8000
-
-# Default command for development
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "UA_13XX_bravo.wsgi:application"]
