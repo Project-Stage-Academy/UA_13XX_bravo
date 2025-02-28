@@ -31,7 +31,7 @@ if not SECRET_KEY:
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",  
@@ -40,14 +40,17 @@ SIMPLE_JWT = {
 }
 
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.Argon2PasswordHasher',  
+    'django.contrib.auth.hashers.Argon2PasswordHasher', 
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
 ]
 
 DJOSER = {
     "LOGIN_FIELD": "email",
     "USER_CREATE_PASSWORD_RETYPE": True,
-    "SEND_ACTIVATION_EMAIL": False,
-    
+    "SEND_ACTIVATION_EMAIL": True, 
+    "ACTIVATION_URL": "auth/activate/{uid}/{token}/",
+    "PASSWORD_RESET_CONFIRM_URL": "auth/password-reset-confirm/{uid}/{token}/",
 }
 
 
@@ -88,6 +91,7 @@ INSTALLED_APPS = [
     "drf_spectacular_sidecar",
     'rest_framework_simplejwt',
     'djoser',
+    "rest_framework_simplejwt.token_blacklist",
 ]
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
