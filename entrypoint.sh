@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Applying database migrations..."
-python manage.py migrate --noinput
+python manage.py migrate --no-input
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
