@@ -83,24 +83,7 @@ We are committed to delivering a platform that is not just a marketplace for ide
 - Each user story can be broken down into smaller tasks and developed in sprints.
 - Regular feedback from both user groups (startups and investors) should be incorporated.
 
-## Code Linting with Pylint
 
-To maintain code quality, we use **Pylint** to analyze the code and ensure it follows best practices.
-
-### Running Pylint Locally
-
-Before pushing your changes, run Pylint to check for errors and maintain code quality:
-
-## 📌 Installation
-
-Before running Pylint, install the required dependencies from `requirements.txt`:
-
-1. Install the required dependencies:
-   ```sh
-   pip install -r requirements.txt
-
-To check your code for potential issues, run the following command:
-pylint --load-plugins=pylint_django [your_django_app_folder]
 
 
 
