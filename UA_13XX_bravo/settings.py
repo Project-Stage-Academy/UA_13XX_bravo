@@ -17,6 +17,9 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+LOG_DIR = os.path.join(BASE_DIR, 'logs') # Автоматичне створення папки logs/
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR) 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -157,6 +160,77 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Custom settings
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {  # Загальний лог-файл для WARNING і вище
+            'level': 'WARNING',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'app.log'),
+            'when': 'midnight',
+            'backupCount': 7,
+            'formatter': 'verbose',
+        },
+        'error_file': {  # Лог-файл для ERROR і CRITICAL
+            'level': 'ERROR',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
+            'when': 'midnight',
+            'backupCount': 7,
+            'formatter': 'verbose',
+        },
+        'critical_file': {  # Лог-файл ТІЛЬКИ для CRITICAL
+            'level': 'CRITICAL',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'critical.log'),
+            'when': 'midnight',
+            'backupCount': 7,
+            'formatter': 'verbose',
+        },
+        'info_file': {  # Окремий лог-файл ТІЛЬКИ для INFO
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'info.log'),
+            'when': 'midnight',
+            'backupCount': 7,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': { # Логування запит-відповідь циклів
+            'handlers': ['console', 'file', 'error_file', 'critical_file', 'info_file'],
+            'level': 'DEBUG',
+        },
+        'django.db.backends': { # Логування запитів до бази даних
+            'handlers': ['console', 'file', 'error_file', 'critical_file', 'info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'myapp': { # Логер для всіх додатків (наразі myapp)
+            'handlers': ['console', 'file', 'error_file', 'critical_file', 'info_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 # Set local settings
 try:
