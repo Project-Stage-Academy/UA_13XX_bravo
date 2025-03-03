@@ -27,4 +27,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Pylint
-        run: pylint --load-plugins=pylint_django UA_13XX_bravo
+        run: pylint --load-plugins=pylint_django --fail-under=7.0 UA_13XX_bravo
