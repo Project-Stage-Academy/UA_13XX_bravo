@@ -12,14 +12,17 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-LOG_DIR = os.path.join(BASE_DIR, 'logs') # Автоматичне створення папки logs/
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR) 
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)  
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -29,11 +32,38 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("Missing DJANGO_SECRET_KEY environment variable")
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",  
+    "SIGNING_KEY": SECRET_KEY,  
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher', 
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+]
+
+DJOSER = {
+    "LOGIN_FIELD": "email",
+    "USER_CREATE_PASSWORD_RETYPE": True,
+    "SEND_ACTIVATION_EMAIL": True, 
+    "ACTIVATION_URL": "auth/activate/{uid}/{token}/",
+    "PASSWORD_RESET_CONFIRM_URL": "auth/password-reset-confirm/{uid}/{token}/",
+}
+
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -62,10 +92,19 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "drf_spectacular_sidecar",
+    'rest_framework_simplejwt',
+    'djoser',
+    "rest_framework_simplejwt.token_blacklist",
 ]
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
+
+
+
 
 
 MIDDLEWARE = [
@@ -161,7 +200,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Custom settings
 
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -181,50 +219,50 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': {  # Загальний лог-файл для WARNING і вище
+        'file': { # General log file for WARNING and above
             'level': 'WARNING',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'app.log'),
-            'when': 'midnight',
+            'maxBytes': 5 * 1024 * 1024,  # 5MB
             'backupCount': 7,
             'formatter': 'verbose',
         },
-        'error_file': {  # Лог-файл для ERROR і CRITICAL
+        'error_file': { # Log file for ERROR and CRITICAL
             'level': 'ERROR',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
-            'when': 'midnight',
+            'maxBytes': 5 * 1024 * 1024,  
             'backupCount': 7,
             'formatter': 'verbose',
         },
-        'critical_file': {  # Лог-файл ТІЛЬКИ для CRITICAL
+        'critical_file': { # Log file only for CRITICAL
             'level': 'CRITICAL',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'critical.log'),
-            'when': 'midnight',
+            'maxBytes': 5 * 1024 * 1024,  
             'backupCount': 7,
             'formatter': 'verbose',
         },
-        'info_file': {  # Окремий лог-файл ТІЛЬКИ для INFO
+        'info_file': { # Separate log file for INFO only
             'level': 'INFO',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'info.log'),
-            'when': 'midnight',
+            'maxBytes': 5 * 1024 * 1024,  
             'backupCount': 7,
             'formatter': 'verbose',
         },
     },
     'loggers': {
-        'django': { # Логування запит-відповідь циклів
-            'handlers': ['console', 'file', 'error_file', 'critical_file', 'info_file'],
+        'django': { # Logging request-response cycles
+            'handlers': ['console', 'file', 'error_file', 'critical_file'],
             'level': 'DEBUG',
         },
-        'django.db.backends': { # Логування запитів до бази даних
-            'handlers': ['console', 'file', 'error_file', 'critical_file', 'info_file'],
-            'level': 'INFO',
+        'django.db.backends': { # Logging database queries
+            'handlers': ['console', 'file'],
+            'level': 'WARNING',  # Warnings and errors only
             'propagate': False,
         },
-        'myapp': { # Логер для всіх додатків (наразі myapp)
+        'myapp': { # Logger for all applications (currently myapp)
             'handlers': ['console', 'file', 'error_file', 'critical_file', 'info_file'],
             'level': 'DEBUG',
             'propagate': True,
