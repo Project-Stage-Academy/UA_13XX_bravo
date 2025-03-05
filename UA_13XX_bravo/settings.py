@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'djoser',
     "rest_framework_simplejwt.token_blacklist",
+    "phonenumber_field",
 ]
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -203,3 +204,6 @@ try:
     from .local_settings import *
 except ImportError:
     pass
+
+
+AUTH_USER_MODEL = 'users.User'
