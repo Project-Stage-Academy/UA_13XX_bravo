@@ -14,15 +14,17 @@ from pathlib import Path
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+import logging
+from logging.handlers import RotatingFileHandler
 
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-LOG_DIR = BASE_DIR / "logs"
-LOG_DIR.mkdir(exist_ok=True)  
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -200,9 +202,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Custom settings
 
+# Отримуємо рівень логування з .env (за замовчуванням - DEBUG)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
+DB_LOG_LEVEL = os.getenv("DB_LOG_LEVEL", "INFO")
+
+# Максимальний розмір логу (5MB) перед ротацією
+MAX_LOG_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+BACKUP_COUNT = 5  # Кількість резервних лог-файлів
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    
     'formatters': {
         'verbose': {
             'format': '{asctime} {levelname} {name} {message}',
@@ -213,58 +224,51 @@ LOGGING = {
             'style': '{',
         },
     },
+
     'handlers': {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': { # General log file for WARNING and above
+        'file': {
             'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'app.log'),
-            'maxBytes': 5 * 1024 * 1024,  # 5MB
-            'backupCount': 7,
+            'filename': os.path.join(LOG_DIR, 'app.log'),
+            'maxBytes': MAX_LOG_FILE_SIZE,
+            'backupCount': BACKUP_COUNT,
             'formatter': 'verbose',
         },
-        'error_file': { # Log file for ERROR and CRITICAL
+        'error_file': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
-            'maxBytes': 5 * 1024 * 1024,  
-            'backupCount': 7,
+            'filename': os.path.join(LOG_DIR, 'error.log'),
+            'maxBytes': MAX_LOG_FILE_SIZE,
+            'backupCount': BACKUP_COUNT,
             'formatter': 'verbose',
         },
-        'critical_file': { # Log file only for CRITICAL
+        'critical_file': {
             'level': 'CRITICAL',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'critical.log'),
-            'maxBytes': 5 * 1024 * 1024,  
-            'backupCount': 7,
-            'formatter': 'verbose',
-        },
-        'info_file': { # Separate log file for INFO only
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'info.log'),
-            'maxBytes': 5 * 1024 * 1024,  
-            'backupCount': 7,
+            'filename': os.path.join(LOG_DIR, 'critical.log'),
+            'maxBytes': MAX_LOG_FILE_SIZE,
+            'backupCount': BACKUP_COUNT,
             'formatter': 'verbose',
         },
     },
+
+    'root': {  # Головний логер, який застосовується до всіх додатків
+        'handlers': ['console', 'file', 'error_file', 'critical_file'],
+        'level': LOG_LEVEL,
+    },
+
     'loggers': {
-        'django': { # Logging request-response cycles
-            'handlers': ['console', 'file', 'error_file', 'critical_file'],
-            'level': 'DEBUG',
+        'django': {
+            'level': LOG_LEVEL,
+            'propagate': True,
         },
-        'django.db.backends': { # Logging database queries
-            'handlers': ['console', 'file'],
-            'level': 'WARNING',  # Warnings and errors only
-            'propagate': False,
-        },
-        'myapp': { # Logger for all applications (currently myapp)
-            'handlers': ['console', 'file', 'error_file', 'critical_file', 'info_file'],
-            'level': 'DEBUG',
+        'django.db.backends': {
+            'level': DB_LOG_LEVEL,
             'propagate': True,
         },
     },
