@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 import logging
 from logging.handlers import RotatingFileHandler
 
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -70,7 +71,7 @@ CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "your-email@example.com")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "your-password")
@@ -97,6 +98,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'djoser',
     "rest_framework_simplejwt.token_blacklist",
+    "phonenumber_field",
 ]
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -275,7 +277,11 @@ LOGGING = {
 }
 
 # Set local settings
+# pylint: disable=wildcard-import
 try:
     from .local_settings import *
 except ImportError:
     pass
+
+
+AUTH_USER_MODEL = 'users.User'
