@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>User to Company Relations</title>
+</head>
+
+<body>
+    <h1>User to Company</h1>
+    {% for relation in relations %}
+    <p>User: {{ relation.user.username }} | Company: {{ relation.company.company_name }}</p>
+    {% endfor %}
+</body>
+
+</html>
