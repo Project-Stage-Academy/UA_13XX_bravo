@@ -40,8 +40,3 @@ urlpatterns += [
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
 ]
-
-urlpatterns += [
-    path("api/", include("profiles.urls")),
-    path("api/", include("projects.urls")),
-]
