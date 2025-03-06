@@ -64,22 +64,11 @@ class UserSerializer(serializers.ModelSerializer):
         return user
     
     
-    def update(self, instance, validated_data):
-        password = validated_data.pop("password", None)
-        if password:
-            validate_password(password)
-            instance.set_password(password)
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
-        instance.save()
-        return instance
     
-    # def update(self, instance, validated_data):
-    #     if "password" in validated_data:
-    #         password = validated_data.pop("password")
-    #         validate_password(password)  
-    #         instance.set_password(password)  
+    def update(self, instance, validated_data):
+        if "password" in validated_data:
+            password = validated_data.pop("password")
+            validate_password(password)  
+            instance.set_password(password)  
 
-    #     return super().update(instance, validated_data)
+        return super().update(instance, validated_data)
