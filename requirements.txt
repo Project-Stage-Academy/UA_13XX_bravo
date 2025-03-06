@@ -25,4 +25,4 @@ django-phonenumber-field==8.0.0
 phonenumberslite==9.0.0
 pylint==3.3.4
 pylint-django==2.6.1
-phonenumberslite==9.0.0
+django-allauth==65.4.1
