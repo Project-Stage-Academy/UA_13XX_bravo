@@ -26,3 +26,4 @@ phonenumberslite==9.0.0
 pylint==3.3.4
 pylint-django==2.6.1
 phonenumberslite==9.0.0
+pillow==9.0.0
