@@ -37,7 +37,7 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save(is_active=False)
 
         token = generate_verification_token(user)
-        verification_url = f"http://127.0.0.1:8000/auth/verify-email/?token={token}"
+        verification_url = f"{settings.FRONTEND_URL}/auth/verify-email/?token={token}"
 
         send_mail(
             "Confirm your email",
@@ -70,12 +70,15 @@ class VerifyEmailView(APIView):
         token = request.GET.get("token")
         user = verify_token(token)
 
-        if user:
-            user.is_active = True
-            user.save()
-            return Response({"message": "Email confirmed. You can now log in!"}, status=status.HTTP_200_OK)
+        if not user:
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+        if user.is_active:
+            return Response({"message": "Email already verified."}, status=status.HTTP_200_OK)
+
+        user.is_active = True
+        user.save()
+        return Response({"message": "Email confirmed. You can now log in!"}, status=status.HTTP_200_OK)
 
 
 
