@@ -14,11 +14,16 @@ from pathlib import Path
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+import logging
+from logging.handlers import RotatingFileHandler
+
 
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -198,6 +203,78 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Custom settings
+
+# Отримуємо рівень логування з .env (за замовчуванням - DEBUG)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
+DB_LOG_LEVEL = os.getenv("DB_LOG_LEVEL", "INFO")
+
+# Максимальний розмір логу (5MB) перед ротацією
+MAX_LOG_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+BACKUP_COUNT = 5  # Кількість резервних лог-файлів
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'app.log'),
+            'maxBytes': MAX_LOG_FILE_SIZE,
+            'backupCount': BACKUP_COUNT,
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'error.log'),
+            'maxBytes': MAX_LOG_FILE_SIZE,
+            'backupCount': BACKUP_COUNT,
+            'formatter': 'verbose',
+        },
+        'critical_file': {
+            'level': 'CRITICAL',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'critical.log'),
+            'maxBytes': MAX_LOG_FILE_SIZE,
+            'backupCount': BACKUP_COUNT,
+            'formatter': 'verbose',
+        },
+    },
+
+    'root': {  # Головний логер, який застосовується до всіх додатків
+        'handlers': ['console', 'file', 'error_file', 'critical_file'],
+        'level': LOG_LEVEL,
+    },
+
+    'loggers': {
+        'django': {
+            'level': LOG_LEVEL,
+            'propagate': True,
+        },
+        'django.db.backends': {
+            'level': DB_LOG_LEVEL,
+            'propagate': True,
+        },
+    },
+}
 
 # Set local settings
 # pylint: disable=wildcard-import
