@@ -53,9 +53,11 @@ DJOSER = {
     "ACTIVATION_URL": "auth/activate/{uid}/{token}/",
     "PASSWORD_RESET_CONFIRM_URL": "auth/password-reset-confirm/{uid}/{token}/",
     "SERIALIZERS": {
-        "user_create": "your_app.serializers.UserSerializer",
+        "user_create": "users.serializers.UserCreateSerializer",
+
     },
 }
+
 
 
 
@@ -70,7 +72,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = bool(os.getenv("EMAIL_USE_TLS"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")

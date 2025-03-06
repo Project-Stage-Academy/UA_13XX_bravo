@@ -45,7 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data["password"])  
         user.save()
         return user
-    
+     
     
     
     def update(self, instance, validated_data):
@@ -55,3 +55,6 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)  
 
         return super().update(instance, validated_data)
+    
+
+
