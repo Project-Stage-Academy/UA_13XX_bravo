@@ -449,6 +449,9 @@ disable=raw-checker-failed,
 enable=
 
 
+disable=missing-docstring,invalid-envvar-value
+
+
 [METHOD_ARGS]
 
 # List of qualified names (i.e., library.method) which require a timeout
@@ -647,7 +650,17 @@ ignored-argument-names=_.*|^ignored_|^unused_
 
 # Tells whether we should check for unused import in __init__ files.
 init-import=no
+dummy-variables-rgx=_.*|^ignored_|^unused_
+additional-builtins=gettext
 
 # List of qualified module names which can have objects that can redefine
 # builtins.
 redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+
+
+
+[MESSAGES CONTROL]
+# Ігнорувати помилки, пов'язані з відсутніми змінними середовища
+disable=missing-docstring,invalid-envvar-value
+
+
