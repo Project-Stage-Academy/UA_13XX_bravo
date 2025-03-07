@@ -22,7 +22,7 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-LOG_DIR = os.path.join(BASE_DIR, 'logs')
+LOG_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -40,13 +40,13 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "ALGORITHM": "HS256",  
-    "SIGNING_KEY": SECRET_KEY,  
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.Argon2PasswordHasher', 
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
 ]
@@ -54,16 +54,13 @@ PASSWORD_HASHERS = [
 DJOSER = {
     "LOGIN_FIELD": "email",
     "USER_CREATE_PASSWORD_RETYPE": True,
-    "SEND_ACTIVATION_EMAIL": True, 
+    "SEND_ACTIVATION_EMAIL": True,
     "ACTIVATION_URL": "auth/activate/{uid}/{token}/",
     "PASSWORD_RESET_CONFIRM_URL": "auth/password-reset-confirm/{uid}/{token}/",
     "SERIALIZERS": {
         "user_create": "users.serializers.UserCreateSerializer",
-
     },
 }
-
-
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -88,7 +85,6 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -102,13 +98,14 @@ INSTALLED_APPS = [
     "users",
     "notifications",
     "projects",
+    "companies",
     "communications",
     "investments",
     "rest_framework",
     "drf_spectacular",
     "drf_spectacular_sidecar",
-    'rest_framework_simplejwt',
-    'djoser',
+    "rest_framework_simplejwt",
+    "djoser",
     "rest_framework_simplejwt.token_blacklist",
     "phonenumber_field",
     "django.contrib.sites",
@@ -118,14 +115,11 @@ INSTALLED_APPS = [
 ]
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
-SITE_ID = 1 
-
-
-
+SITE_ID = 1
 
 
 MIDDLEWARE = [
@@ -178,7 +172,7 @@ DATABASES = {
 DATABASES["default"]["CONN_MAX_AGE"] = 600
 
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 
 # Password validation
@@ -234,65 +228,61 @@ MAX_LOG_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 BACKUP_COUNT = 5  # Кількість резервних лог-файлів
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    
-    'formatters': {
-        'verbose': {
-            'format': '{asctime} {levelname} {name} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'file': {
-            'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, 'app.log'),
-            'maxBytes': MAX_LOG_FILE_SIZE,
-            'backupCount': BACKUP_COUNT,
-            'formatter': 'verbose',
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, 'error.log'),
-            'maxBytes': MAX_LOG_FILE_SIZE,
-            'backupCount': BACKUP_COUNT,
-            'formatter': 'verbose',
-        },
-        'critical_file': {
-            'level': 'CRITICAL',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, 'critical.log'),
-            'maxBytes': MAX_LOG_FILE_SIZE,
-            'backupCount': BACKUP_COUNT,
-            'formatter': 'verbose',
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
-
-    'root': {  # Головний логер, який застосовується до всіх додатків
-        'handlers': ['console', 'file', 'error_file', 'critical_file'],
-        'level': LOG_LEVEL,
-    },
-
-    'loggers': {
-        'django': {
-            'level': LOG_LEVEL,
-            'propagate': True,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
         },
-        'django.db.backends': {
-            'level': DB_LOG_LEVEL,
-            'propagate': True,
+        "file": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "app.log"),
+            "maxBytes": MAX_LOG_FILE_SIZE,
+            "backupCount": BACKUP_COUNT,
+            "formatter": "verbose",
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "error.log"),
+            "maxBytes": MAX_LOG_FILE_SIZE,
+            "backupCount": BACKUP_COUNT,
+            "formatter": "verbose",
+        },
+        "critical_file": {
+            "level": "CRITICAL",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "critical.log"),
+            "maxBytes": MAX_LOG_FILE_SIZE,
+            "backupCount": BACKUP_COUNT,
+            "formatter": "verbose",
+        },
+    },
+    "root": {  # Головний логер, який застосовується до всіх додатків
+        "handlers": ["console", "file", "error_file", "critical_file"],
+        "level": LOG_LEVEL,
+    },
+    "loggers": {
+        "django": {
+            "level": LOG_LEVEL,
+            "propagate": True,
+        },
+        "django.db.backends": {
+            "level": DB_LOG_LEVEL,
+            "propagate": True,
         },
     },
 }
@@ -303,5 +293,3 @@ try:
     from .local_settings import *
 except ImportError:
     pass
-
-

@@ -43,5 +43,5 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    path("api/", include("profiles.urls")),
+    path("api/", include("companies.urls")),
 ]
