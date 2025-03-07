@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# views.py
 from rest_framework import viewsets
 from .models import CompanyProfile, UserToCompany
 from .serializers import CompanyProfileSerializer, UserToCompanySerializer

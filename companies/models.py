@@ -6,7 +6,7 @@ class CompanyProfile(models.Model):
     company_name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     website = models.URLField(blank=True, null=True)
-    startup_logo = models.ImageField(upload_to="logos/", blank=True, null=True)
+    startup_logo = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     type = models.CharField(max_length=255, blank=True, null=True)
