@@ -58,8 +58,8 @@ DJOSER = {
     "ACTIVATION_URL": "auth/activate/{uid}/{token}/",
     "PASSWORD_RESET_CONFIRM_URL": "auth/password-reset-confirm/{uid}/{token}/",
     "SERIALIZERS": {
-        "user_create": "users.serializers.UserCreateSerializer",
-
+        "user_create": "users.serializers.UserCreateSerializer",  
+        "user": "users.serializers.UserSerializer",  
     },
 }
 
