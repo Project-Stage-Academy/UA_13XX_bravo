@@ -62,6 +62,17 @@ class UserCreateSerializer(serializers.ModelSerializer):
         validated_data.pop("re_password")
         user = User.objects.create_user(**validated_data)
         return user
-    
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.UUIDField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
 
 
