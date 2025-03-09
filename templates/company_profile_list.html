@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Company Profiles</title>
+</head>
+
+<body>
+    <h1>Company Profiles</h1>
+    {% for company in companies %}
+    <div>
+        <h2>{{ company.company_name }}</h2>
+        <p>{{ company.description }}</p>
+        <p>
+            Website:
+            {% if company.website %}
+            <a href="{{ company.website }}">{{ company.website }}</a>
+            {% else %}
+            N/A
+            {% endif %}
+        </p>
+        {% if company.startup_logo %}
+        <img src="{{ company.startup_logo.url }}" alt="Startup Logo">
+        {% endif %}
+        <p>Type: {{ company.type }}</p>
+        <p>Created at: {{ company.created_at }}</p>
+        <p>Updated at: {{ company.updated_at }}</p>
+    </div>
+    <hr>
+    {% endfor %}
+</body>
+
+</html>
