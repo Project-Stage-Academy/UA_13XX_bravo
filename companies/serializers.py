@@ -10,6 +10,10 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
     def validate_company_name(self, value):
         if not value:
             raise serializers.ValidationError("Company name cannot be empty.")
+        if CompanyProfile.objects.filter(company_name=value).exists():
+            raise serializers.ValidationError(
+                "A company with this name already exists."
+            )
         return value
 
     def validate_type(self, value):
@@ -32,3 +36,12 @@ class UserToCompanySerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("Company (id) cannot be empty.")
         return value
+
+    def validate(self, data):
+        if UserToCompany.objects.filter(
+            user=data["user"], company=data["company"]
+        ).exists():
+            raise serializers.ValidationError(
+                "This user is already linked to the company."
+            )
+        return data
