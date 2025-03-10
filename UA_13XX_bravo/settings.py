@@ -10,12 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+#import logging
+#from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
-import logging
-from logging.handlers import RotatingFileHandler
+
 
 
 load_dotenv()
@@ -122,7 +123,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
-SITE_ID = 1 
+SITE_ID = 1
 
 
 
@@ -236,7 +237,7 @@ BACKUP_COUNT = 5  # Кількість резервних лог-файлів
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    
+
     'formatters': {
         'verbose': {
             'format': '{asctime} {levelname} {name} {message}',
@@ -303,5 +304,3 @@ try:
     from .local_settings import *
 except ImportError:
     pass
-
-
