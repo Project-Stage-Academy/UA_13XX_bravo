@@ -4,7 +4,7 @@
 
 #!/bin/bash
 # List of directories to check (modify as needed)
-DIRECTORIES=("communications" "dashboard" "profiles" "projects" "users" )
+DIRECTORIES=("communications" "dashboard" "companies" "projects" "users" )
 
 # List of required files in each directory
 REQUIRED_FILES=("models.py" "views.py" "serializers.py" "urls.py" "permissions.py")
