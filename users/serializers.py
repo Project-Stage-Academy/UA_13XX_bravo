@@ -67,9 +67,9 @@ class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
-    uid = serializers.UUIDField()
-    token = serializers.CharField()
-    new_password = serializers.CharField(write_only=True, min_length=8)
+    new_password = serializers.CharField(
+        write_only=True, min_length=8, style={"input_type": "password"}
+    )
 
     def validate_new_password(self, value):
         validate_password(value)

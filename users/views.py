@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from .utils import generate_verification_token, verify_token
 from .serializers import UserSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
 from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
 
 User = get_user_model()
 
@@ -84,19 +86,34 @@ class VerifyEmailView(APIView):
 class PasswordResetRequestView(APIView):
     """
     API View to handle password reset requests.
+    
+    This view accepts an email address, checks if the user exists,
+    and sends a password reset email with a link.
     """
     permission_classes = [AllowAny]
+    serializer_class = PasswordResetSerializer  
 
+    
     def post(self, request):
+        """
+        Handle POST request to send a password reset email with a user-friendly URL.
+        
+        Args:
+            request: The HTTP request object containing the user's email.
+        
+        Returns:
+            Response: A JSON response indicating success or failure.
+        """
         serializer = PasswordResetSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
             try:
                 user = User.objects.get(email=email)
                 token = default_token_generator.make_token(user)
-                reset_url = f"{settings.FRONTEND_URL}/reset-password/"
-                email_body = f"Use the following token to reset your password:\n\nToken: {token}\nUID: {user.id}"
-
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                reset_url = f"{settings.FRONTEND_URL}/password-reset-confirm/{uid}/{token}/"
+                email_body = f"Click the link below to reset your password:\n{reset_url}"
+                
                 send_mail(
                     "Password Reset Request",
                     email_body,
@@ -112,24 +129,36 @@ class PasswordResetRequestView(APIView):
 class PasswordResetConfirmView(APIView):
     """
     API View to reset password after verifying token.
+    
+    This view verifies the token and user ID, then allows the user to set a new password.
     """
     permission_classes = [AllowAny]
+    serializer_class = PasswordResetConfirmSerializer  
 
-    def post(self, request):
+    def post(self, request, uidb64, token):
+        """
+        Handle POST request to reset password using a user-friendly link.
+        
+        Args:
+            request: The HTTP request object containing the new password.
+            uidb64: Base64 encoded user ID.
+            token: Password reset token.
+        
+        Returns:
+            Response: A JSON response indicating success or failure.
+        """
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if serializer.is_valid():
-            uid = serializer.validated_data['uid']
-            token = serializer.validated_data['token']
-            new_password = serializer.validated_data['new_password']
-            
             try:
-                user = User.objects.get(id=uid)
+                uid = urlsafe_base64_decode(uidb64).decode()
+                user = User.objects.get(pk=uid)
+                
                 if default_token_generator.check_token(user, token):
-                    user.set_password(new_password)
+                    user.set_password(serializer.validated_data['new_password'])
                     user.save()
                     return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
                 else:
                     return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
-            except User.DoesNotExist:
+            except (User.DoesNotExist, ValueError, TypeError):
                 return Response({"error": "Invalid user."}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
