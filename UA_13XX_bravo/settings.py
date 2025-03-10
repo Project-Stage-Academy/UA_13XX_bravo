@@ -126,9 +126,6 @@ REST_FRAMEWORK = {
 SITE_ID = 1
 
 
-
-
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -237,7 +234,6 @@ BACKUP_COUNT = 5  # Кількість резервних лог-файлів
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-
     'formatters': {
         'verbose': {
             'format': '{asctime} {levelname} {name} {message}',
@@ -304,3 +300,5 @@ try:
     from .local_settings import *
 except ImportError:
     pass
+
+

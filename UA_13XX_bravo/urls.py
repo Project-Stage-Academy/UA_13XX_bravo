@@ -41,3 +41,7 @@ urlpatterns += [
     path("auth/", include("djoser.urls.jwt")),
     path("auth/", include("users.urls")),
 ]
+
+urlpatterns += [
+    path("api/", include("companies.urls")),
+]
