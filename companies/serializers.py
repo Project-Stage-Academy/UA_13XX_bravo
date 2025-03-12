@@ -1,8 +1,17 @@
 from rest_framework import serializers
-from .models import CompanyProfile, UserToCompany
+from .models import CompanyProfile, UserToCompany, COMPANY_TYPES
 
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
+    type = serializers.ChoiceField(
+        choices=list(dict(COMPANY_TYPES).keys()),
+        error_messages={
+            "invalid_choice": "Invalid company type. Choose from: {}".format(
+                ", ".join(dict(COMPANY_TYPES).keys())
+            )
+        },
+    )
+
     class Meta:
         model = CompanyProfile
         fields = "__all__"
@@ -38,10 +47,19 @@ class UserToCompanySerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        if UserToCompany.objects.filter(
-            user=data["user"], company=data["company"]
-        ).exists():
+        user = data["user"]
+        company = data["company"]
+
+        if UserToCompany.objects.filter(user=user, company=company).exists():
             raise serializers.ValidationError(
                 "This user is already linked to the company."
             )
+
+        company_type = company.type
+
+        if UserToCompany.objects.filter(user=user, company__type=company_type).exists():
+            raise serializers.ValidationError(
+                "This user is already linked to another company with the same type."
+            )
+
         return data
