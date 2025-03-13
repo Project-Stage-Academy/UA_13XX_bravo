@@ -11,7 +11,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate_content(self, value):
-        if not value.strip():
+        if value is None or not value.strip():
             raise serializers.ValidationError("Content cannot be empty.")
         return value
 

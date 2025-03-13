@@ -24,6 +24,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notification.save()
         return Response({"status": "marked as read"})
 
+    @action(detail=False, methods=["patch"])
+    def mark_all_as_read(self, request):
+        notifications = Notification.objects.filter(user=request.user, is_read=False)
+        count = notifications.update(is_read=True)
+        return Response({"status": f"{count} notifications marked as read"})
+
 
 class NotificationPreferenceViewSet(viewsets.ModelViewSet):
     queryset = NotificationPreference.objects.all()
