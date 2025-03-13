@@ -150,13 +150,13 @@ class PasswordResetSerializer(serializers.Serializer):
     2. Confirming the password reset with a new password.
     """
     email = serializers.EmailField(required=False)
-    new_password = serializers.CharField(write_only=True, min_length=8, required=False, style = { "input_type" : "password" })
+    new_password = serializers.CharField(write_only=True, min_length=8, required=False, style = { "input_type" : "password" }, validators=[validate_password])
     confirm_password = serializers.CharField(write_only=True, min_length=8, required=False, style = { "input_type" : "password" })
 
     def validate(self, data):
         if "new_password" in data and "confirm_password" in data:
             if data['new_password'] != data['confirm_password']:
-                raise serializers.ValidationError("Passwords do not match.")
+                raise serializers.ValidationError({"new_password": ["Passwords do not match."]})
             
             try:
                 validate_password(data["new_password"])
