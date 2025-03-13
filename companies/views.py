@@ -3,6 +3,7 @@ from .models import CompanyProfile, UserToCompany
 from .serializers import CompanyProfileSerializer, UserToCompanySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from django.db import transaction
 
 
 class CompanyProfileViewSet(viewsets.ModelViewSet):
@@ -12,18 +13,17 @@ class CompanyProfileViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """When creating a company, it automatically adds a user connection."""
-        company = serializer.save()
+        with transaction.atomic():  # Ensures both operations succeed or fail together
+            company = serializer.save()
 
-        data = {
-            "user": self.request.user.id,
-            "company": company.id,
-        }
-        user_to_company_serializer = UserToCompanySerializer(data=data)
+            user_to_company_serializer = UserToCompanySerializer(
+                data={"user": self.request.user.id, "company": company.id}
+            )
 
-        if user_to_company_serializer.is_valid():
-            user_to_company_serializer.save()
-        else:
-            raise ValidationError(user_to_company_serializer.errors)
+            if user_to_company_serializer.is_valid():
+                user_to_company_serializer.save()
+            else:
+                raise ValidationError(user_to_company_serializer.errors)
 
 
 class UserToCompanyViewSet(viewsets.ModelViewSet):
