@@ -142,16 +142,37 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 class PasswordResetSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    """
+    Serializer for handling password reset requests and confirmations.
+    
+    It supports two modes:
+    1. Requesting a password reset via email.
+    2. Confirming the password reset with a new password.
+    """
+    email = serializers.EmailField(required=False)
+    new_password = serializers.CharField(write_only=True, min_length=8, required=False, style = { "input_type" : "password" })
+    confirm_password = serializers.CharField(write_only=True, min_length=8, required=False, style = { "input_type" : "password" })
 
-class PasswordResetConfirmSerializer(serializers.Serializer):
-    new_password = serializers.CharField(
-        write_only=True, min_length=8, style={"input_type": "password"}
-    )
+    def validate(self, data):
+        if "new_password" in data and "confirm_password" in data:
+            if data['new_password'] != data['confirm_password']:
+                raise serializers.ValidationError("Passwords do not match.")
+            
+            try:
+                validate_password(data["new_password"])
+            except serializers.ValidationError as e:
+                raise serializers.ValidationError({"new_password": e.messages})
+            
+        elif "email" not in data:
+            raise serializers.ValidationError("Either email or new password must be provided.")
+        
+        return data
 
-    def validate_new_password(self, value):
-        validate_password(value)
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            return value
         return value
+
 
 
 
