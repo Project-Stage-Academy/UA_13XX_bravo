@@ -7,9 +7,10 @@ from rest_framework import status, generics
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from .utils import generate_verification_token, verify_token
-from .serializers import UserSerializer 
+from .serializers import LogoutSerializer, UserSerializer 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 User = get_user_model()
 
@@ -84,34 +85,24 @@ class VerifyEmailView(APIView):
 
 class LogoutView(APIView):
     """
-    View for logout a user.
+    View for logging out a user.
 
-    This view handles a user`s refresh tokento a blacklist.
+    This view handles a user's refresh token and adds it to the blacklist.
     """
     permission_classes = [IsAuthenticated]
-
     def post(self, request):
         """
         Log out a user by blacklisting their refresh token.
-
-        This method extracts the refresh token from the request body and adds it to 
-        the blacklist, effectively revoking the user's authentication session.
-
-        Args:
-            request (Request): The HTTP request object containing the refresh token.
-
-        Returns:
-            Response: A JSON response indicating whether the logout was successful 
-            or if an error occurred (e.g., missing or invalid token).
         """
-        refresh_token = request.data.get("refresh_token")
-        
-        if not refresh_token:
-            return Response({"error": "Refresh token is required"}, status=400)
+        serializer = LogoutSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
 
         try:
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({"message": "Successfully logged out."}, status=200)
-        except Exception as e:
-            return Response({"error": "Invalid token"}, status=400)
+            return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
+        except TokenError:
+            return Response({"error": "Invalid or expired refresh token."}, status=status.HTTP_400_BAD_REQUEST)
