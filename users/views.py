@@ -8,6 +8,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from .utils import generate_verification_token, verify_token
 from .serializers import UserSerializer, UserCreateSerializer 
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+from .serializers import CustomTokenObtainPairSerializer
 
 from users.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -64,7 +67,7 @@ class VerifyEmailView(APIView):
 
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, request) -> Response:
         """
         Verify the user's email address using the token from the request.
 
@@ -93,10 +96,48 @@ class VerifyEmailView(APIView):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
-    def get_token(cls, user):
+    def get_token(cls, user) -> dict:
         token = super().get_token(user)
         token['email'] = user.email 
         return token
 
 class LoginView(TokenObtainPairView):
+    """
+    View for handling user login and generating JWT tokens.
+
+    This view uses the CustomTokenObtainPairSerializer to include additional
+    information in the token payload.
+    """
     serializer_class = CustomTokenObtainPairSerializer
+
+
+
+
+
+
+class CustomJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request) -> tuple:
+        """
+        Authenticate the user using JWT and attach company_id to the request.
+
+        Args:
+            request: The HTTP request object.
+
+        Returns:
+            tuple: A tuple containing the authenticated user and the token.
+
+        Raises:
+            AuthenticationFailed: If the token is invalid or missing company_id.
+        """
+        response = super().authenticate(request)
+        if response is None:
+            return None
+
+        user, token = response
+        company_id = token.get("company_id")
+
+        if not company_id:
+            raise AuthenticationFailed("Invalid token: company_id missing.")
+
+        request.company_id = company_id
+        return (user, token)
