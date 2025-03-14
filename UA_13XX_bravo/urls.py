@@ -40,6 +40,7 @@ urlpatterns += [
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
     path("auth/", include("users.urls")),
+    path("company/", include("companies.urls")),
 ]
 
 urlpatterns += [
