@@ -7,7 +7,10 @@ from rest_framework import status, generics
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from .utils import generate_verification_token, verify_token
-from .serializers import LogoutSerializer, UserSerializer 
+from .serializers import LogoutSerializer, UserSerializer, UserCreateSerializer 
+from users.models import User
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -25,7 +28,7 @@ class RegisterView(generics.CreateAPIView):
 
     permission_classes = [AllowAny]
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserCreateSerializer
 
     def perform_create(self, serializer):
         """
@@ -49,6 +52,8 @@ class RegisterView(generics.CreateAPIView):
             [user.email],
             fail_silently=False,
         )
+
+        
 
 class VerifyEmailView(APIView):
     """
@@ -83,6 +88,7 @@ class VerifyEmailView(APIView):
         user.save()
         return Response({"message": "Email confirmed. You can now log in!"}, status=status.HTTP_200_OK)
 
+
 class LogoutView(APIView):
     """
     View for logging out a user.
@@ -106,3 +112,13 @@ class LogoutView(APIView):
             return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
         except TokenError:
             return Response({"error": "Invalid or expired refresh token."}, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['email'] = user.email 
+        return token
+
+class LoginView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
