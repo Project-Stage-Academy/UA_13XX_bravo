@@ -45,3 +45,7 @@ urlpatterns += [
 urlpatterns += [
     path("api/", include("companies.urls")),
 ]
+
+urlpatterns += [
+    path("api/", include("notifications.urls")),
+]
