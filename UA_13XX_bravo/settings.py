@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     "communications",
     "investments",
     "rest_framework",
+    "companies",
     "drf_spectacular",
     "drf_spectacular_sidecar",
     'rest_framework_simplejwt',
