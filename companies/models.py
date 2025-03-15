@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from django.core.exceptions import ValidationError
 
 COMPANY_TYPES = [
     ("startup", "Startup"),
@@ -20,7 +21,7 @@ class CompanyProfile(models.Model):
     )
 
     def __str__(self):
-        return f"{self.company_name} - {self.id}"
+        return self.company_name
 
     class Meta:
         verbose_name_plural = "Company"
@@ -42,3 +43,29 @@ class UserToCompany(models.Model):
     class Meta:
         unique_together = ("user", "company")
         verbose_name_plural = "User to Company"
+        
+class CompanyFollowers(models.Model):
+    investor = models.ForeignKey(
+        CompanyProfile, on_delete=models.CASCADE, related_name="invested_startups",
+    )
+    startup = models.ForeignKey(
+        CompanyProfile, on_delete=models.CASCADE, related_name="startup_investors",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("investor", "startup")  
+        verbose_name_plural = "Investor-Startup Relations"
+
+    def clean(self):
+        if self.investor.type != "enterprise":
+            raise ValidationError({"investor": "The company must be an investor (enterprise)."})
+        if self.startup.type != "startup":
+            raise ValidationError({"startup": "The company must be a startup."})
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.investor.company_name} follows {self.startup.company_name}"
