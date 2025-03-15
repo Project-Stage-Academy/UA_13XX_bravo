@@ -141,7 +141,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
     
-
+class LogoutSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
 
 
 
