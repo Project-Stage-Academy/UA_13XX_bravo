@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Notification, NotificationPreference
+from .models import Notification, NotificationPreference, Type
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -33,7 +33,17 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 class NotificationPreferenceSerializer(serializers.ModelSerializer):
     enabled = serializers.BooleanField(default=True)
+    type = serializers.CharField()
 
     class Meta:
         model = NotificationPreference
-        fields = "__all__"
+        fields = ["type", "enabled"]
+
+    def create(self, validated_data):
+        type_name = validated_data.pop("type")
+        type_obj = Type.objects.filter(name=type_name).first()
+
+        if not type_obj:
+            raise serializers.ValidationError({"type": "Invalid type name"})
+
+        return NotificationPreference.objects.create(type=type_obj, **validated_data)
