@@ -4,34 +4,37 @@ from .serializers import CompanyProfileSerializer, UserToCompanySerializer, Comp
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import CreateAPIView
 import logging
+from rest_framework.exceptions import ValidationError
+from django.db import transaction
 
 
 logger = logging.getLogger(__name__)
 
 
-class CompanyProfileViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for viewing and editing CompanyProfile instances.
 
-    Attributes:
-        queryset (QuerySet): A queryset of all CompanyProfile instances.
-        serializer_class (Serializer): The serializer class for CompanyProfile instances.
-        permission_classes (list): A list of permission classes for the viewset.
-    """
+
+
+class CompanyProfileViewSet(viewsets.ModelViewSet):
     queryset = CompanyProfile.objects.all()
     serializer_class = CompanyProfileSerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        """When creating a company, it automatically adds a user connection."""
+        with transaction.atomic():  # Ensures both operations succeed or fail together
+            company = serializer.save()
+
+            user_to_company_serializer = UserToCompanySerializer(
+                data={"user": self.request.user.id, "company": company.id}
+            )
+
+            if user_to_company_serializer.is_valid():
+                user_to_company_serializer.save()
+            else:
+                raise ValidationError(user_to_company_serializer.errors)
+
 
 class UserToCompanyViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for viewing and editing UserToCompany instances.
-
-    Attributes:
-        queryset (QuerySet): A queryset of all UserToCompany instances.
-        serializer_class (Serializer): The serializer class for UserToCompany instances.
-        permission_classes (list): A list of permission classes for the viewset.
-    """
     queryset = UserToCompany.objects.all()
     serializer_class = UserToCompanySerializer
     permission_classes = [IsAuthenticated]
