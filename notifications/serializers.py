@@ -33,17 +33,36 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 class NotificationPreferenceSerializer(serializers.ModelSerializer):
     enabled = serializers.BooleanField(default=True)
-    type = serializers.CharField()
+    type = serializers.SlugRelatedField(queryset=Type.objects.all(), slug_field="name")
 
     class Meta:
         model = NotificationPreference
-        fields = ["type", "enabled"]
+        fields = ["user", "type", "enabled"]
 
     def create(self, validated_data):
         type_name = validated_data.pop("type")
-        type_obj = Type.objects.filter(name=type_name).first()
+        type_obj = Type.get_cached_types().filter(name=type_name).first()
 
         if not type_obj:
-            raise serializers.ValidationError({"type": "Invalid type name"})
+            raise serializers.ValidationError(
+                {
+                    "type": "Invalid type name",
+                    "correct_types": Type.get_cached_types().values_list(
+                        "name", flat=True
+                    ),
+                }
+            )
 
+        if NotificationPreference.objects.filter(
+            user=validated_data["user"], type=type_obj
+        ).exists():
+            raise serializers.ValidationError(
+                "A preference with this user and type already exists.[serializer]"
+            )
         return NotificationPreference.objects.create(type=type_obj, **validated_data)
+
+
+class TypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Type
+        fields = ["id", "name"]
