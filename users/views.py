@@ -11,6 +11,7 @@ from .serializers import UserSerializer, UserCreateSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from .serializers import CustomTokenObtainPairSerializer
+from companies.models import UserToCompany
 
 from users.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -138,6 +139,12 @@ class CustomJWTAuthentication(JWTAuthentication):
 
         if not company_id:
             raise AuthenticationFailed("Invalid token: company_id missing.")
+        
+        if not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
+            raise AuthenticationFailed("User is not associated with the selected company.")
 
-        request.company_id = company_id
+
+        if not hasattr(request, "company_id"):
+            setattr(request, "company_id", company_id)
+            
         return (user, token)

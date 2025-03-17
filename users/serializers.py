@@ -145,6 +145,8 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    company_id = serializers.IntegerField(required=True)
+
     def validate(self, attrs: dict) -> dict:
         """
         Validate and add company_id to the token payload.
@@ -184,7 +186,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             dict: The token payload with company_id.
         """
         token = super().get_token(user)
-        user_to_company = UserToCompany.objects.filter(user=user).first()
-        if user_to_company:
-            token["company_id"] = user_to_company.company_id
+        token["email"] = user.email
+
+        request_data = cls.context["request"].data
+        company_id = request_data.get("company_id")
+
+        if not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
+            raise serializers.ValidationError("You are not associated with this company.")
+
+        token["company_id"] = company_id  
         return token
+

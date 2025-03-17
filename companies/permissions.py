@@ -16,8 +16,10 @@ class IsCompanyMember(BasePermission):
         Returns:
             bool: True if the user is associated with the company, False otherwise.
         """
-        company_id = getattr(request, "company_id", None)
-        if not company_id:
+        company_id = request.headers.get("X-Company-ID", getattr(request, "company_id", None))
+
+        if not company_id or not UserToCompany.objects.filter(user=request.user, company_id=company_id).exists():
             return False
 
-        return UserToCompany.objects.filter(user=request.user, company_id=company_id).exists()
+        request.company_id = company_id
+        return True

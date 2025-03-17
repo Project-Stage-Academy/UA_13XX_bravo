@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import CompanyProfile, UserToCompany
+from django.db import transaction
 
 
 
@@ -158,7 +159,9 @@ class CompanyRegistrationSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             raise serializers.ValidationError("User must be authenticated to create a company.")
 
-        company = CompanyProfile.objects.create(**validated_data)
-        UserToCompany.objects.create(user=request.user, company=company)
+        with transaction.atomic(): 
+            company = CompanyProfile.objects.create(**validated_data)
+            UserToCompany.objects.create(user=request.user, company=company)
+
         return company
 
