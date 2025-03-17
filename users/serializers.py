@@ -132,12 +132,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
         validated_data.pop("re_password")
         user = User.objects.create_user(**validated_data)
         return user
-
-
+      
+class LogoutSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
+    
 class PasswordResetSerializer(serializers.Serializer):
     """
     Serializer for handling password reset requests and confirmations.
-    
     It supports two modes:
     1. Requesting a password reset via email.
     2. Confirming the password reset with a new password.

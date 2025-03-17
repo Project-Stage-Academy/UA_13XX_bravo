@@ -8,7 +8,7 @@ from rest_framework import status, generics
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from .utils import generate_verification_token, verify_token
-from .serializers import UserSerializer, UserCreateSerializer 
+from .serializers import UserSerializer, UserCreateSerializer, LogoutSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from .serializers import CustomTokenObtainPairSerializer
@@ -20,7 +20,9 @@ from .utils import generate_verification_token, verify_token
 from .serializers import UserSerializer, PasswordResetSerializer, UserCreateSerializer
 from users.models import User
 from datetime import timedelta
-
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 
 User = get_user_model()
@@ -97,6 +99,30 @@ class VerifyEmailView(APIView):
         return Response({"message": "Email confirmed. You can now log in!"}, status=status.HTTP_200_OK)
 
 
+
+class LogoutView(APIView):
+    """
+    View for logging out a user.
+
+    This view handles a user's refresh token and adds it to the blacklist.
+    """
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        """
+        Log out a user by blacklisting their refresh token.
+        """
+        serializer = LogoutSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
+        except TokenError:
+            return Response({"error": "Invalid or expired refresh token."}, status=status.HTTP_400_BAD_REQUEST)
 class PasswordResetRequestView(APIView):
     """
     API View to handle password reset requests.
