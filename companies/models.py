@@ -20,7 +20,7 @@ class CompanyProfile(models.Model):
     )
 
     def __str__(self):
-        return self.company_name
+        return f"{self.company_name} - {self.id}"
 
     class Meta:
         verbose_name_plural = "Company"

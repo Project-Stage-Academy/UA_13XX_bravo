@@ -11,9 +11,6 @@ from django.db import transaction
 logger = logging.getLogger(__name__)
 
 
-
-
-
 class CompanyProfileViewSet(viewsets.ModelViewSet):
     queryset = CompanyProfile.objects.all()
     serializer_class = CompanyProfileSerializer

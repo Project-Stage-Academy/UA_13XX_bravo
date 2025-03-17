@@ -48,6 +48,3 @@ def verify_token(token):
         return None
 
     return None
-
-
-
