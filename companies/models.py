@@ -62,10 +62,16 @@ class CompanyFollowers(models.Model):
             raise ValidationError({"investor": "The company must be an investor (enterprise)."})
         if self.startup.type != "startup":
             raise ValidationError({"startup": "The company must be a startup."})
-
+        if self.investor == self.startup:
+            raise ValidationError("A company cannot follow itself.")
+    
     def save(self, *args, **kwargs):
-        self.clean()
+        try:
+            self.clean()
+        except ValidationError as e:
+            raise ValidationError(f"Validation Error: {e}")
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.investor.company_name} follows {self.startup.company_name}"

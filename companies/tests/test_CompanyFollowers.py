@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from companies.models import CompanyProfile, CompanyFollowers
+from django.db import transaction
+from django.db.utils import IntegrityError
 
 class CompanyFollowersModelTest(TestCase):
 
@@ -14,16 +16,18 @@ class CompanyFollowersModelTest(TestCase):
     def test_valid_investor_startup_relation(self):
         """Check that an investor (enterprise) can invest in a startup."""
         relation = CompanyFollowers.objects.create(investor=self.enterprise, startup=self.startup)
+        relation.full_clean()
+        relation.save()
         self.assertEqual(relation.investor, self.enterprise)
         self.assertEqual(relation.startup, self.startup)
 
     def test_invalid_investor_type(self):
         """Ensure that a startup or nonprofit cannot be an investor."""
-        with self.assertRaises(ValidationError):
+        with self.assertRaisesMessage(ValidationError, "The company must be an investor (enterprise)."):
             invalid_relation = CompanyFollowers(investor=self.startup, startup=self.enterprise)
-            invalid_relation.full_clean()  # Trigger validation before saving
+            invalid_relation.full_clean()  
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaisesMessage(ValidationError, "The company must be an investor (enterprise)."):
             invalid_relation = CompanyFollowers(investor=self.nonprofit, startup=self.startup)
             invalid_relation.full_clean()
 
@@ -36,5 +40,6 @@ class CompanyFollowersModelTest(TestCase):
     def test_unique_relation(self):
         """Ensure that duplicate investment relations cannot be created."""
         CompanyFollowers.objects.create(investor=self.enterprise, startup=self.startup)
-        with self.assertRaises(Exception):  # Django will raise an IntegrityError
-            CompanyFollowers.objects.create(investor=self.enterprise, startup=self.startup)
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():  
+                CompanyFollowers.objects.create(investor=self.enterprise, startup=self.startup)
