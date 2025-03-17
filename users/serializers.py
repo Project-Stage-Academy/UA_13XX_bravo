@@ -1,13 +1,12 @@
 from rest_framework import serializers
 from users.models import User
-
-    
-
-
 from django.contrib.auth.password_validation import validate_password
 from phonenumber_field.serializerfields import PhoneNumberField
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from companies.models import UserToCompany
 
 class UserSerializer(serializers.ModelSerializer):
     """
@@ -20,7 +19,6 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8, required=True)
     phone = PhoneNumberField()
 
-
     class Meta:
         """
         Meta class to map serializer's fields with the model fields.
@@ -31,7 +29,7 @@ class UserSerializer(serializers.ModelSerializer):
             "password": {"write_only": True},
         }
 
-    def validate_email(self, value):
+    def validate_email(self, value: str) -> str:
         """
         Validate the email format and ensure it is unique.
 
@@ -45,7 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
             str: The validated email address.
         """
         try:
-            validate_email(value) 
+            validate_email(value)
         except ValidationError:
             raise serializers.ValidationError("Invalid email format.")
 
@@ -53,7 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
-    def validate_password(self, value):
+    def validate_password(self, value: str) -> str:
         """
         Validate the password using Django's password validators.
 
@@ -63,15 +61,10 @@ class UserSerializer(serializers.ModelSerializer):
         Returns:
             str: The validated password.
         """
-
-        validate_password(value)  
+        validate_password(value)
         return value
 
-
-     
-    
-    
-    def update(self, instance, validated_data):
+    def update(self, instance: User, validated_data: dict) -> User:
         """
         Update a user instance with validated data.
 
@@ -84,11 +77,10 @@ class UserSerializer(serializers.ModelSerializer):
         """
         if "password" in validated_data:
             password = validated_data.pop("password")
-            validate_password(password)  
-            instance.set_password(password)  
+            validate_password(password)
+            instance.set_password(password)
 
         return super().update(instance, validated_data)
-    
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """
@@ -110,7 +102,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'password', 're_password', 'first_name', 'last_name', 'phone']
 
-    def validate(self, data):
+    def validate(self, data: dict) -> dict:
         """
         Validate that the password and confirmed password match.
 
@@ -127,7 +119,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"re_password": "Passwords do not match"})
         return data
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> User:
         """
         Create a new user with the validated data.
 
@@ -140,6 +132,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         validated_data.pop("re_password")
         user = User.objects.create_user(**validated_data)
         return user
+
 
 class PasswordResetSerializer(serializers.Serializer):
     """
@@ -174,9 +167,6 @@ class PasswordResetSerializer(serializers.Serializer):
         return value
 
 
-
-
-
 class LoginSerializer(serializers.Serializer):
     """
     Serializer for handling user login, validating email and password.
@@ -187,3 +177,54 @@ class LoginSerializer(serializers.Serializer):
     """
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+
+
+    
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    company_id = serializers.IntegerField(required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        """
+        Validate and add company_id to the token payload if provided.
+
+        Args:
+            attrs (dict): The attributes to validate.
+
+        Raises:
+            ValidationError: If company_id is provided but user is not associated with the company.
+
+        Returns:
+            dict: The validated data with company_id.
+        """
+        data = super().validate(attrs)
+        company_id = attrs.get("company_id")
+
+        if company_id:
+            user = self.user
+            if not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
+                raise serializers.ValidationError("User is not associated with this company.")
+            data["company_id"] = company_id
+
+        return data
+
+    @classmethod
+    def get_token(cls, user: User) -> dict:
+        """
+        Customize the token payload to include company_id if provided.
+
+        Args:
+            user (User): The user for whom the token is generated.
+
+        Returns:
+            dict: The token payload with company_id if provided.
+        """
+        token = super().get_token(user)
+        token["email"] = user.email
+
+        company_id = cls.context["request"].data.get("company_id")
+        if company_id:
+            token["company_id"] = company_id
+
+        return token
+
