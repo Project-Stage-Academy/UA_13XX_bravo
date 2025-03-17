@@ -144,56 +144,53 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
+
+    
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    company_id = serializers.IntegerField(required=True)
+    company_id = serializers.IntegerField(required=False)
 
     def validate(self, attrs: dict) -> dict:
         """
-        Validate and add company_id to the token payload.
+        Validate and add company_id to the token payload if provided.
 
         Args:
             attrs (dict): The attributes to validate.
 
         Raises:
-            ValidationError: If company_id is missing or user is not associated with the company.
+            ValidationError: If company_id is provided but user is not associated with the company.
 
         Returns:
             dict: The validated data with company_id.
         """
         data = super().validate(attrs)
-        request = self.context["request"]
-        company_id = request.data.get("company_id")
+        company_id = attrs.get("company_id")
 
-        if not company_id:
-            raise serializers.ValidationError("Company selection is required.")
+        if company_id:
+            user = self.user
+            if not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
+                raise serializers.ValidationError("User is not associated with this company.")
+            data["company_id"] = company_id
 
-        user = self.user
-        if not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
-            raise serializers.ValidationError("User is not associated with this company.")
-
-        data["company_id"] = company_id
         return data
 
     @classmethod
     def get_token(cls, user: User) -> dict:
         """
-        Customize the token payload to include company_id.
+        Customize the token payload to include company_id if provided.
 
         Args:
             user (User): The user for whom the token is generated.
 
         Returns:
-            dict: The token payload with company_id.
+            dict: The token payload with company_id if provided.
         """
         token = super().get_token(user)
         token["email"] = user.email
 
-        request_data = cls.context["request"].data
-        company_id = request_data.get("company_id")
+        company_id = cls.context["request"].data.get("company_id")
+        if company_id:
+            token["company_id"] = company_id
 
-        if not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
-            raise serializers.ValidationError("You are not associated with this company.")
-
-        token["company_id"] = company_id  
         return token
 
