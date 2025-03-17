@@ -440,17 +440,15 @@ disable=raw-checker-failed,
         use-symbolic-message-instead,
         use-implicit-booleaness-not-comparison-to-string,
         use-implicit-booleaness-not-comparison-to-zero,
-        C0103
+        C0103,
+        missing-docstring,
+        invalid-envvar-value
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
 enable=
-
-
-disable=missing-docstring,invalid-envvar-value
-
 
 [METHOD_ARGS]
 
@@ -628,7 +626,7 @@ signature-mutators=
 
 # List of additional names supposed to be defined in builtins. Remember that
 # you should avoid defining new builtins when possible.
-additional-builtins=
+additional-builtins=gettext
 
 # Tells whether unused global variables should be treated as a violation.
 allow-global-unused-variables=yes
@@ -643,24 +641,14 @@ callbacks=cb_,
 
 # A regular expression matching the name of dummy variables (i.e. expected to
 # not be used).
-dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+dummy-variables-rgx=_.*|^ignored_|^unused_|_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy
 
 # Argument names that match this expression will be ignored.
 ignored-argument-names=_.*|^ignored_|^unused_
 
 # Tells whether we should check for unused import in __init__ files.
 init-import=no
-dummy-variables-rgx=_.*|^ignored_|^unused_
-additional-builtins=gettext
 
 # List of qualified module names which can have objects that can redefine
 # builtins.
 redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
-
-
-
-[MESSAGES CONTROL]
-# Ігнорувати помилки, пов'язані з відсутніми змінними середовища
-disable=missing-docstring,invalid-envvar-value
-
-
