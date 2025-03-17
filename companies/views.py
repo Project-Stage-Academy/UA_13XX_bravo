@@ -1,9 +1,14 @@
 from rest_framework import viewsets
-from .models import CompanyProfile, UserToCompany
-from .serializers import CompanyProfileSerializer, UserToCompanySerializer
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import CompanyProfile, UserToCompany, CompanyFollowers
+from .serializers import CompanyProfileSerializer, UserToCompanySerializer, CompanyFollowersSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from django.db.utils import IntegrityError
 
 
 class CompanyProfileViewSet(viewsets.ModelViewSet):
@@ -30,3 +35,22 @@ class UserToCompanyViewSet(viewsets.ModelViewSet):
     queryset = UserToCompany.objects.all()
     serializer_class = UserToCompanySerializer
     permission_classes = [IsAuthenticated]
+
+class FollowStartupView(APIView):
+    def post(self, request, startup_id):
+        """Allow an investor to follow a startup."""
+        try:
+            investor_company = request.user.company_memberships.get(company__type="enterprise")
+            investor_id = investor_company.company.id
+        except UserToCompany.DoesNotExist:
+            return Response({"error": "User must be linked to an enterprise company."}, status=400)
+        startup = get_object_or_404(CompanyProfile, id=startup_id, type="startup")
+        investor = get_object_or_404(CompanyProfile, id=investor_id, type="enterprise")
+
+        if CompanyFollowers.objects.filter(investor=investor, startup=startup).exists():
+            return Response({"detail": "You are already following this startup."}, status=status.HTTP_400_BAD_REQUEST)
+
+        follow_relation = CompanyFollowers.objects.create(investor=investor, startup=startup)
+        serializer = CompanyFollowersSerializer(follow_relation)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
