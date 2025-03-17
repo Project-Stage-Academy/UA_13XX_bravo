@@ -38,6 +38,7 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationPreference
         fields = ["user", "type", "enabled"]
+        read_only_fields = ["user"]
 
     def create(self, validated_data):
         type_name = validated_data.pop("type")
