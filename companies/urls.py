@@ -7,5 +7,5 @@ router.register(r"company", CompanyProfileViewSet, basename="companyprofile")
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("api/startups/<int:startup_id>/save/", FollowStartupView.as_view(), name="follow-startup"),
+    path("startups/<int:startup_id>/save/", FollowStartupView.as_view(), name="follow-startup"),
 ]

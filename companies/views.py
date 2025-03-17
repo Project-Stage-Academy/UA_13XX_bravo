@@ -37,15 +37,24 @@ class UserToCompanyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 class FollowStartupView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+    
+    def get_investor_company(self, user):
+        """Отримує компанію інвестора (enterprise), якщо така існує."""
+        try:
+            investor_company = user.company_memberships.get(company__type="enterprise")
+            return investor_company.company
+        except UserToCompany.DoesNotExist:
+            return None
+        
     def post(self, request, startup_id):
         """Allow an investor to follow a startup."""
-        try:
-            investor_company = request.user.company_memberships.get(company__type="enterprise")
-            investor_id = investor_company.company.id
-        except UserToCompany.DoesNotExist:
-            return Response({"error": "User must be linked to an enterprise company."}, status=400)
+        investor = self.get_investor_company(request.user)
+        if not investor:
+            return Response({"error": "User must be linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
+
         startup = get_object_or_404(CompanyProfile, id=startup_id, type="startup")
-        investor = get_object_or_404(CompanyProfile, id=investor_id, type="enterprise")
 
         if CompanyFollowers.objects.filter(investor=investor, startup=startup).exists():
             return Response({"detail": "You are already following this startup."}, status=status.HTTP_400_BAD_REQUEST)

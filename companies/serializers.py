@@ -76,16 +76,11 @@ class UserToCompanySerializer(serializers.ModelSerializer):
 class CompanyFollowersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyFollowers
-        fields = ["investor", "startup", "created_at"]
+        fields = ["startup", "created_at"]
 
     def validate(self, data):
-        """Ensure that investor is of type 'enterprise' and startup is of type 'startup'."""
-        investor = data.get("investor")
+        """Ensure that company has the right type."""
         startup = data.get("startup")
-
-        if investor.type != "enterprise":
-            raise serializers.ValidationError({"investor": "The company must be an investor (enterprise)."})
         if startup.type != "startup":
             raise serializers.ValidationError({"startup": "The company must be a startup."})
-
         return data
