@@ -2,11 +2,16 @@ from django.db import models
 from users.models import User
 from django.core.exceptions import ValidationError
 
-COMPANY_TYPES = [
-    ("startup", "Startup"),
-    ("enterprise", "Enterprise"),
-    ("nonprofit", "Non-Profit"),
-]
+class CompanyType:
+    STARTUP = "startup"
+    ENTERPRISE = "enterprise"
+    NONPROFIT = "nonprofit"
+
+    CHOICES = [
+        (STARTUP, "Startup"),
+        (ENTERPRISE, "Enterprise"),
+        (NONPROFIT, "Non-Profit"),
+    ]
 
 
 class CompanyProfile(models.Model):
@@ -17,11 +22,11 @@ class CompanyProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     type = models.CharField(
-        max_length=255, choices=COMPANY_TYPES, blank=True, null=True
+        max_length=255, choices=CompanyType.CHOICES, blank=True, null=True
     )
 
     def __str__(self):
-        return self.company_name
+        return f"{self.company_name} - {self.id}"
 
     class Meta:
         verbose_name_plural = "Company"
@@ -58,9 +63,9 @@ class CompanyFollowers(models.Model):
         verbose_name_plural = "Investor-Startup Relations"
 
     def clean(self):
-        if self.investor.type != "enterprise":
+        if self.investor.type != CompanyType.ENTERPRISE:
             raise ValidationError({"investor": "The company must be an investor (enterprise)."})
-        if self.startup.type != "startup":
+        if self.startup.type != CompanyType.STARTUP:
             raise ValidationError({"startup": "The company must be a startup."})
         if self.investor == self.startup:
             raise ValidationError("A company cannot follow itself.")

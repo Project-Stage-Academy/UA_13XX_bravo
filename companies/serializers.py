@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import CompanyProfile, UserToCompany, COMPANY_TYPES, CompanyFollowers
-
+from .models import CompanyProfile, UserToCompany, CompanyFollowers
+from django.db import transaction    
+    
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
     type = serializers.ChoiceField(
@@ -72,6 +73,43 @@ class UserToCompanySerializer(serializers.ModelSerializer):
             )
 
         return data
+    
+class CompanyRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for registering a new company.
+
+    This serializer handles the creation of a new company and associates it with the authenticated user.
+    """
+    class Meta:
+        """
+        Meta class to map serializer's fields with the model fields.
+        """
+        model = CompanyProfile
+        fields = ["company_name", "description", "type"]
+
+    def create(self, validated_data: dict) -> CompanyProfile:
+        """
+        Create a new company and associate it with the authenticated user.
+
+        Args:
+            validated_data (dict): The data to create a new company with.
+
+        Raises:
+            serializers.ValidationError: If the user is not authenticated.
+
+        Returns:
+            CompanyProfile: The created company instance.
+        """
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("User must be authenticated to create a company.")
+
+        with transaction.atomic(): 
+            company = CompanyProfile.objects.create(**validated_data)
+            UserToCompany.objects.create(user=request.user, company=company)
+
+        return company
+
 
 class CompanyFollowersSerializer(serializers.ModelSerializer):
     class Meta:

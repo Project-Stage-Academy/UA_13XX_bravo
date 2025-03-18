@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from companies.models import CompanyProfile, CompanyFollowers
+from companies.models import CompanyProfile, CompanyFollowers, CompanyType
 from django.db import transaction
 from django.db.utils import IntegrityError
 
@@ -8,10 +8,10 @@ class CompanyFollowersModelTest(TestCase):
 
     def setUp(self):
         """Create companies for testing."""
-        self.enterprise = CompanyProfile.objects.create(company_name="Big Corp", type="enterprise")
-        self.investor = CompanyProfile.objects.create(company_name="VC Firm", type="enterprise")
-        self.startup = CompanyProfile.objects.create(company_name="Tech Startup", type="startup")
-        self.nonprofit = CompanyProfile.objects.create(company_name="Helping Hands", type="nonprofit")
+        self.enterprise = CompanyProfile.objects.create(company_name="Big Corp", type=CompanyType.ENTERPRISE)
+        self.investor = CompanyProfile.objects.create(company_name="VC Firm", type=CompanyType.ENTERPRISE)
+        self.startup = CompanyProfile.objects.create(company_name="Tech Startup", type=CompanyType.STARTUP)
+        self.nonprofit = CompanyProfile.objects.create(company_name="Helping Hands", type=CompanyType.NONPROFIT)
 
     def test_valid_investor_startup_relation(self):
         """Check that an investor (enterprise) can invest in a startup."""
