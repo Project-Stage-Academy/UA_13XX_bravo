@@ -21,7 +21,7 @@ class LogoutTests(APITestCase):
     def test_logout_invalid_token(self):
         response = self.client.post("/auth/logout/", {"refresh_token": "invalid_token"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"], "Invalid or expired refresh token.")
 
     def test_logout_missing_token(self):
         response = self.client.post("/auth/logout/", {})
@@ -32,6 +32,12 @@ class LogoutTests(APITestCase):
         self.client.credentials()  
         response = self.client.post("/auth/logout/", {"refresh_token": str(self.refresh)})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_already_used_token(self):
+        self.client.post("/auth/logout/", {"refresh_token": str(self.refresh)})
+        response = self.client.post("/auth/logout/", {"refresh_token": str(self.refresh)})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
 
     
 
