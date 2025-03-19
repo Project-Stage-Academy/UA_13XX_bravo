@@ -11,9 +11,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from .permissions import IsOwner
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -53,26 +50,11 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
         return self.queryset.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-
-        serializer = self.get_serializer(data=request.data)
+        mutable_data = request.data.copy()
+        mutable_data["user"] = request.user
+        serializer = self.get_serializer(data=mutable_data)
         serializer.is_valid(raise_exception=True)
-
-        type_name = serializer.validated_data.get("type")
-        type_instance = Type.objects.filter(name=type_name).first()
-
-        if not type_instance:
-            raise ValidationError(f"Type '{type_name}' not found.")
-
-        duplicate_exists = NotificationPreference.objects.filter(
-            user=request.user, type=type_instance
-        ).exists()
-
-        if duplicate_exists:
-            raise ValidationError(
-                "A preference with this user and type already exists.[view]"
-            )
-
-        serializer.save(user=request.user, type=type_instance)
+        self.perform_create(serializer)
 
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -80,7 +62,20 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        type_name = serializer.validated_data.get("type")
+        type_instance = Type.objects.filter(name=type_name).first()
+
+        if not type_instance:
+            raise ValidationError(f"Type '{type_name}' not found.")
+
+        if NotificationPreference.objects.filter(
+            user=self.request.user, type=type_instance
+        ).exists():
+            raise ValidationError(
+                "A preference with this user and type already exists."
+            )
+
+        serializer.save(user=self.request.user, type=type_instance)
 
 
 class TypesListView(APIView):

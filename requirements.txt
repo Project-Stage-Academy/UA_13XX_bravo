@@ -29,3 +29,4 @@ django-allauth==65.4.1
 phonenumberslite==9.0.0
 pillow==9.0.0
 pytest==8.0.0
+pytest-django==4.0.0
