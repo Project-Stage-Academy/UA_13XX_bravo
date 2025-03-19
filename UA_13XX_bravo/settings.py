@@ -98,7 +98,6 @@ INSTALLED_APPS = [
     "UA_13XX_bravo",
     "users",
     "notifications",
-    "companies",
     "projects",
     "communications",
     "investments",
