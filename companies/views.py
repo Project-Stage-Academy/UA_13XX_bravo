@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CompanyProfile, UserToCompany, CompanyFollowers
+from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
 from .serializers import CompanyProfileSerializer, UserToCompanySerializer, CompanyFollowersSerializer, CompanyRegistrationSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import CreateAPIView
@@ -81,7 +81,7 @@ class FollowStartupView(APIView):
     def get_investor_company(self, user):
         """Отримує компанію інвестора (enterprise), якщо така існує."""
         try:
-            investor_company = user.company_memberships.get(company__type="enterprise")
+            investor_company = user.company_memberships.get(company__type=CompanyType.ENTERPRISE)
             return investor_company.company
         except UserToCompany.DoesNotExist:
             return None
@@ -92,7 +92,7 @@ class FollowStartupView(APIView):
         if not investor:
             return Response({"error": "User must be linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
 
-        startup = get_object_or_404(CompanyProfile, id=startup_id, type="startup")
+        startup = get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
 
         if CompanyFollowers.objects.filter(investor=investor, startup=startup).exists():
             return Response({"detail": "You are already following this startup."}, status=status.HTTP_400_BAD_REQUEST)

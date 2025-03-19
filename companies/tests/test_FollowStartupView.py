@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 from users.models import User
-from companies.models import CompanyProfile, CompanyFollowers, UserToCompany
+from companies.models import CompanyProfile, CompanyFollowers, UserToCompany, CompanyType
 
 class FollowStartupAPITest(TestCase):
     def setUp(self):
@@ -10,15 +10,15 @@ class FollowStartupAPITest(TestCase):
         self.client = APIClient()
         
         self.investor_user = User.objects.create_user(email="investor@example.com", password="testpass123!")
-        self.investor_company = CompanyProfile.objects.create(company_name="Investor Corp", type="enterprise")
+        self.investor_company = CompanyProfile.objects.create(company_name="Investor Corp", type=CompanyType.ENTERPRISE)
         UserToCompany.objects.create(user=self.investor_user, company=self.investor_company)
 
-        self.startup = CompanyProfile.objects.create(company_name="Tech Startup", type="startup")
+        self.startup = CompanyProfile.objects.create(company_name="Tech Startup", type=CompanyType.STARTUP)
 
         self.user_no_company = User.objects.create_user(email="no_company@example.com", password="testpass123!")
 
         self.non_investor_user = User.objects.create_user(email="non_investor@example.com", password="testpass123!")
-        self.non_investor_company = CompanyProfile.objects.create(company_name="Regular Company", type="startup")
+        self.non_investor_company = CompanyProfile.objects.create(company_name="Regular Company", type=CompanyType.STARTUP)
         UserToCompany.objects.create(user=self.non_investor_user, company=self.non_investor_company)
 
     def test_follow_startup_success(self):
