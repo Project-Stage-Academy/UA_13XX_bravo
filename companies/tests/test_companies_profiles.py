@@ -107,13 +107,23 @@ def test_company_profile_filter(api_client, test_user):
 
 @pytest.mark.django_db
 def test_company_profile_ordering(api_client, test_user):
-    CompanyProfile.objects.create(company_name="Small Co", description="", company_size=5)
-    CompanyProfile.objects.create(company_name="Big Co", description="", company_size=100)
+    CompanyProfile.objects.create(company_name="Small Co", company_size=5)
+    CompanyProfile.objects.create(company_name="Big Co", company_size=100)
+    CompanyProfile.objects.create(company_name="No Size Co")  # company_size=None
+
     api_client.force_authenticate(user=test_user)
-    response = api_client.get("/api/company/?ordering=company_size")
+
+    # Ascending
+    response = api_client.get(reverse("companyprofile-list") + "?ordering=company_size")
     assert response.status_code == 200
-    sizes = [company["company_size"] for company in response.json()["results"] if company["company_size"] is not None]
+    sizes = [c["company_size"] for c in response.json()["results"] if c["company_size"] is not None]
     assert sizes == sorted(sizes)
+
+    # Descending
+    response = api_client.get(reverse("companyprofile-list") + "?ordering=-company_size")
+    assert response.status_code == 200
+    sizes_desc = [c["company_size"] for c in response.json()["results"] if c["company_size"] is not None]
+    assert sizes_desc == sorted(sizes_desc, reverse=True)
 
 
 @pytest.mark.django_db
