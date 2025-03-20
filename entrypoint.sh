@@ -3,6 +3,9 @@
 echo "Applying database migrations..."
 python manage.py migrate --no-input
 
+echo "Loading initial data..."
+python manage.py loaddata notifications/fixtures/type_fixture.json
+
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
