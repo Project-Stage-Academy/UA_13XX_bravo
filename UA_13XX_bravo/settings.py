@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     "communications",
     "investments",
     "rest_framework",
+    "companies",
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "rest_framework_simplejwt",
@@ -112,7 +113,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "companies",
 ]
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CompanyProfile, UserToCompany, COMPANY_TYPES
+from .models import CompanyProfile, UserToCompany
 from django.db import transaction    
 
 
