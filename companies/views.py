@@ -75,29 +75,23 @@ class RegisterCompanyView(CreateAPIView):
 
 
 class FollowStartupView(APIView):
-    
     permission_classes = [IsAuthenticated]
-    
-    def get_investor_company(self, user):
-        """Отримує компанію інвестора (enterprise), якщо така існує."""
-        try:
-            investor_company = user.company_memberships.get(company__type=CompanyType.ENTERPRISE)
-            return investor_company.company
-        except UserToCompany.DoesNotExist:
-            return None
-        
+
     def post(self, request, startup_id):
         """Allow an investor to follow a startup."""
-        investor = self.get_investor_company(request.user)
-        if not investor:
-            return Response({"error": "User must be linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            investor_company = request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
+        except UserToCompany.DoesNotExist:
+            if not request.user.company_memberships.exists():
+                return Response({"error": "User is not associated with any company."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "User is not linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
 
         startup = get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
 
-        if CompanyFollowers.objects.filter(investor=investor, startup=startup).exists():
+        if CompanyFollowers.objects.filter(investor=investor_company, startup=startup).exists():
             return Response({"detail": "You are already following this startup."}, status=status.HTTP_400_BAD_REQUEST)
 
-        follow_relation = CompanyFollowers.objects.create(investor=investor, startup=startup)
+        follow_relation = CompanyFollowers.objects.create(investor=investor_company, startup=startup)
         serializer = CompanyFollowersSerializer(follow_relation)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)

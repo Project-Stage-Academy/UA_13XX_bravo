@@ -118,8 +118,14 @@ class CompanyFollowersSerializer(serializers.ModelSerializer):
         fields = ["startup", "created_at"]
 
     def validate(self, data):
-        """Ensure that company has the right type."""
+        """Ensure that company has the right type and investor is an enterprise."""
         startup = data.get("startup")
+        investor = data.get("investor")
+
         if startup.type != CompanyType.STARTUP:
             raise serializers.ValidationError({"startup": "The company must be a startup."})
+
+        if investor.type != CompanyType.ENTERPRISE:
+            raise serializers.ValidationError({"investor": "The investor must be an enterprise company."})
+
         return data

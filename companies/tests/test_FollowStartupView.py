@@ -3,6 +3,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from users.models import User
 from companies.models import CompanyProfile, CompanyFollowers, UserToCompany, CompanyType
+from django.urls import reverse
 
 class FollowStartupAPITest(TestCase):
     def setUp(self):
@@ -26,7 +27,9 @@ class FollowStartupAPITest(TestCase):
         Test that an investor can successfully follow a startup.
         """
         self.client.force_authenticate(user=self.investor_user)
-        response = self.client.post(f"/api/startups/{self.startup.id}/save/")
+        url = reverse("follow-startup", kwargs={"startup_id": self.startup.id})
+        response = self.client.post(url)
+        
         assert response.status_code == status.HTTP_201_CREATED
         assert CompanyFollowers.objects.filter(investor=self.investor_company, startup=self.startup).exists()
 
@@ -36,32 +39,44 @@ class FollowStartupAPITest(TestCase):
         """
         CompanyFollowers.objects.create(investor=self.investor_company, startup=self.startup)
         self.client.force_authenticate(user=self.investor_user)
-        response = self.client.post(f"/api/startups/{self.startup.id}/save/")
+        
+        url = reverse("follow-startup", kwargs={"startup_id": self.startup.id})
+        response = self.client.post(url)
+        
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.data["detail"] == "You are already following this startup."
+        assert response.data.get("detail") == "You are already following this startup."
 
     def test_follow_startup_user_not_in_company(self):
         """
         Test that a user who is not linked to a company cannot follow a startup.
         """
         self.client.force_authenticate(user=self.user_no_company)
-        response = self.client.post(f"/api/startups/{self.startup.id}/save/")
+        
+        url = reverse("follow-startup", kwargs={"startup_id": self.startup.id})
+        response = self.client.post(url)
+        
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.data["error"] == "User must be linked to an enterprise company."
+        assert response.data.get("error") == "User is not associated with any company."
 
     def test_follow_startup_company_not_enterprise(self):
         """
         Test that a user linked to a non-enterprise company cannot follow a startup.
         """
         self.client.force_authenticate(user=self.non_investor_user)
-        response = self.client.post(f"/api/startups/{self.startup.id}/save/")
+        
+        url = reverse("follow-startup", kwargs={"startup_id": self.startup.id})
+        response = self.client.post(url)
+        
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.data["error"] == "User must be linked to an enterprise company."
+        assert response.data.get("error") == "User is not linked to an enterprise company."
 
     def test_follow_startup_not_found(self):
         """
         Test that attempting to follow a non-existent startup returns a 404 error.
         """
         self.client.force_authenticate(user=self.investor_user)
-        response = self.client.post("/api/startups/999/save/")  
+        url = reverse("follow-startup", kwargs={"startup_id": 999})
+        response = self.client.post(url) 
+           
         assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data.get("detail") == "No CompanyProfile matches the given query."
