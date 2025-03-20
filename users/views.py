@@ -23,6 +23,7 @@ from datetime import timedelta
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework import serializers
 
 
 User = get_user_model()
@@ -178,25 +179,37 @@ class PasswordResetConfirmView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+    
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    company_id = serializers.IntegerField(required=False) 
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        
+
         user_company = UserToCompany.objects.filter(user=user).first()
         company_id = user_company.company.id if user_company else None
-        token["company_id"] = company_id
-
+        token["company_id"] = company_id 
         return token
-    
+
     def validate(self, attrs):
         data = super().validate(attrs)
-        request = self.context['request']
-        
-        company_id = request.data.get('company_id', None)
-        
-        data['company_id'] = company_id
+        request = self.context["request"]
+
+        company_id = request.data.get("company_id", None)
+
+        if company_id and not UserToCompany.objects.filter(user=self.user, company_id=company_id).exists():
+            raise serializers.ValidationError("You are not associated with this company.")
+
+        if not company_id:
+            user_company = UserToCompany.objects.filter(user=self.user).first()
+            company_id = user_company.company.id if user_company else None
+
+        data["company_id"] = company_id 
         return data
+
+
 
 class LoginView(TokenObtainPairView):
     """
