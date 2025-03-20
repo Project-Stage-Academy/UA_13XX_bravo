@@ -10,6 +10,7 @@ import logging
 from rest_framework.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.db.utils import IntegrityError
 logger = logging.getLogger(__name__)
 
@@ -86,8 +87,10 @@ class FollowStartupView(APIView):
                 return Response({"error": "User is not associated with any company."}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"error": "User is not linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
 
-        startup = get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
-
+        try:
+            startup = get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
+        except Http404:
+            return Response({"error": "Startup not found."} ,status=status.HTTP_404_NOT_FOUND)
         if CompanyFollowers.objects.filter(investor=investor_company, startup=startup).exists():
             return Response({"detail": "You are already following this startup."}, status=status.HTTP_400_BAD_REQUEST)
 

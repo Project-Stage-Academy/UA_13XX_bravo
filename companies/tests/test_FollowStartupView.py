@@ -79,4 +79,5 @@ class FollowStartupAPITest(TestCase):
         response = self.client.post(url) 
            
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.data.get("detail") == "No CompanyProfile matches the given query."
+        print(response.data)
+        assert response.data.get("error") == "Startup not found."
