@@ -1,20 +1,32 @@
-from rest_framework import viewsets
-from .models import CompanyProfile, UserToCompany
-from .serializers import CompanyProfileSerializer, UserToCompanySerializer, CompanyRegistrationSerializer
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import CreateAPIView
 import logging
-from rest_framework.exceptions import ValidationError
+
 from django.db import transaction
+from rest_framework import viewsets, filters
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .models import CompanyProfile, UserToCompany
+from .serializers import (
+    CompanyProfileSerializer,
+    UserToCompanySerializer,
+    CompanyRegistrationSerializer,
+)
+
+
 
 
 logger = logging.getLogger(__name__)
-
 
 class CompanyProfileViewSet(viewsets.ModelViewSet):
     queryset = CompanyProfile.objects.all()
     serializer_class = CompanyProfileSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["company_name", "description"]
+    filterset_fields = ["type", "industry", "required_funding", "company_size"]
+    ordering_fields = ["company_size", "required_funding", "created_at", "updated_at"]
 
     def perform_create(self, serializer):
         """When creating a company, it automatically adds a user connection."""

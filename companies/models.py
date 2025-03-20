@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from phonenumber_field.modelfields import PhoneNumberField
 
 COMPANY_TYPES = [
     ("startup", "Startup"),
@@ -12,13 +13,17 @@ class CompanyProfile(models.Model):
     company_name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     website = models.URLField(blank=True, null=True)
-    startup_logo = models.URLField(blank=True, null=True)
+    startup_logo = models.URLField(blank=True, null=True, default="")
+    industry = models.CharField(max_length=255, blank=True, null=True)
+    required_funding = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    company_size = models.PositiveIntegerField(blank=True, null=True)  # або models.CharField(...) для категорій
+    phone_number = PhoneNumberField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     type = models.CharField(
-        max_length=255, choices=COMPANY_TYPES, blank=True, null=True
-    )
-
+    max_length=255, choices=COMPANY_TYPES, blank=True, null=True, default=""
+)
+    
     def __str__(self):
         return f"{self.company_name} - {self.id}"
 
