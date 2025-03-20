@@ -180,10 +180,23 @@ class PasswordResetConfirmView(APIView):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
-    def get_token(cls, user) -> dict:
+    def get_token(cls, user):
         token = super().get_token(user)
-        token['email'] = user.email 
+        
+        user_company = UserToCompany.objects.filter(user=user).first()
+        company_id = user_company.company.id if user_company else None
+        token["company_id"] = company_id
+
         return token
+    
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        request = self.context['request']
+        
+        company_id = request.data.get('company_id', None)
+        
+        data['company_id'] = company_id
+        return data
 
 class LoginView(TokenObtainPairView):
     """
