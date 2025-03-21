@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 from django.urls import reverse
 from rest_framework import status
 from companies.models import CompanyProfile, UserToCompany
+from django.db import transaction
 
 User = get_user_model()
 
@@ -39,6 +40,8 @@ def test_company_profile_creation_minimal():
     assert company.website == "https://example.com"
     assert company.startup_logo == ""
     assert company.type == ""
+    assert company.company_size is None
+    assert company.phone_number is None
 
 
 @pytest.mark.django_db
@@ -60,40 +63,42 @@ def test_company_profile_creation_full():
 
 
 @pytest.mark.django_db
-def test_user_to_company_duplicate_prevention():
-    user = User.objects.create_user(
-        email="user_dup@example.com",
-        password="pass123"
-    )
+def test_user_to_company_duplicate_prevention(another_user):
     company = CompanyProfile.objects.create(
         company_name="Dup Co",
         description="Dup"
     )
-    UserToCompany.objects.create(user=user, company=company)
+
+    UserToCompany.objects.create(user=another_user, company=company)
 
     with pytest.raises(Exception):
-        UserToCompany.objects.create(user=user, company=company)
-
+        with transaction.atomic():
+            UserToCompany.objects.create(user=another_user, company=company)
+                    
 # === AUTHENTICATED API TESTS ===
+
 
 @pytest.mark.django_db
 def test_company_profile_list_authenticated(api_client, test_user):
     CompanyProfile.objects.create(company_name="VisibleCo", description="Auth can see")
     api_client.force_authenticate(user=test_user)
-    response = api_client.get("/api/company/")
+
+    url = reverse("companyprofile-list")
+    response = api_client.get(url)
+
     assert response.status_code == 200
     assert any(item["company_name"] == "VisibleCo" for item in response.json()["results"])
 
 
 @pytest.mark.django_db
-def test_company_profile_search(api_client, test_user):
-    CompanyProfile.objects.create(company_name="AlphaTech", description="AI")
-    CompanyProfile.objects.create(company_name="BetaSoft", description="Cloud")
+def test_company_profile_search(api_client, test_user, test_companies):
     api_client.force_authenticate(user=test_user)
-    response = api_client.get("/api/company/?search=Beta")
-    assert response.status_code == 200
-    assert all("Beta" in company["company_name"] for company in response.json()["results"])
+    url = reverse("companyprofile-list") + "?search=Beta"
+    response = api_client.get(url)
 
+    assert response.status_code == 200
+    assert any("Beta" in company["company_name"] for company in response.json()["results"])
+    
 
 @pytest.mark.django_db
 def test_company_profile_filter(api_client, test_user):
@@ -161,6 +166,32 @@ def test_unauthorized_company_list_access():
     url = reverse("companyprofile-list")
     response = client.get(url)
     assert response.status_code == 401
+    
+
+@pytest.mark.django_db
+def test_company_access_by_authenticated_user(api_client, django_user_model):
+    """
+    Even if the user is not related to the company, they should still have access
+    to the company list because all authenticated users are allowed to view it.
+    """
+    user = django_user_model.objects.create_user(
+        email="openaccess@example.com",
+        password="pass12345"
+    )
+    CompanyProfile.objects.create(
+        company_name="Public Co",
+        description="Visible to all authenticated users"
+    )
+
+    api_client.force_authenticate(user=user)
+    url = reverse("companyprofile-list")
+    response = api_client.get(url)
+
+    assert response.status_code == 200
+    assert any(
+        company["company_name"] == "Public Co"
+        for company in response.json()["results"]
+    )
 
 
 @pytest.mark.django_db
