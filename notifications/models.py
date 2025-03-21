@@ -1,27 +1,21 @@
 from django.db import models
 from users.models import User
-
-TYPE_CHOICES = [
-    ("new_follower", "New Follower"),
-    ("new_comment", "New Comment"),
-    ("new_like", "New Like"),
-    ("new_post", "New Post"),
-    ("new_message", "New Message"),
-    ("new_report", "New Report"),
-    ("new_request", "New Request"),
-    ("new_connection", "New Connection"),
-    ("new_recommendation", "New Recommendation"),
-    ("new_system_notification", "New System Notification"),
-]
+from django.core.cache import cache
 
 
 class Type(models.Model):
-    name = models.CharField(
-        max_length=200, choices=TYPE_CHOICES, blank=False, null=False
-    )
+    name = models.CharField(max_length=200, blank=False, null=False)
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_cached_types(self):
+        types = cache.get("notification_types")
+        if not types:
+            types = Type.objects.all()
+            cache.set("notification_types", types)
+        return types
 
 
 class Entity(models.Model):
@@ -70,3 +64,7 @@ class NotificationPreference(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.type} - {self.enabled}"
+
+    class Meta:
+        unique_together = ("user", "type")
+        verbose_name_plural = "User to Company"
