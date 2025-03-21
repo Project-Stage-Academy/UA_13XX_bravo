@@ -63,18 +63,26 @@ class CompanyFollowers(models.Model):
         verbose_name_plural = "Investor-Startup Relations"
 
     def clean(self):
+        """Ensure that investor is an enterprise and startup is a startup."""
+        errors = {}
+        
         if self.investor.type != CompanyType.ENTERPRISE:
-            raise ValidationError({"investor": "The company must be an investor (enterprise)."})
+            errors["investor"] = "The company must be an investor (enterprise)."
+            
         if self.startup.type != CompanyType.STARTUP:
-            raise ValidationError({"startup": "The company must be a startup."})
+            errors["startup"] = "The company must be a startup."
+            
         if self.investor == self.startup:
-            raise ValidationError("A company cannot follow itself.")
+            errors["non_self_follow"] = "A company cannot follow itself."
+        
+        if errors:
+            raise ValidationError(errors)
     
     def save(self, *args, **kwargs):
         try:
             self.clean()
-        except ValidationError as e:
-            raise ValidationError(f"Validation Error: {e}")
+        except ValidationError:
+            raise 
         super().save(*args, **kwargs)
 
 
