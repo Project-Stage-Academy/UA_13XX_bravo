@@ -98,3 +98,43 @@ class FollowStartupView(APIView):
         serializer = CompanyFollowersSerializer(follow_relation)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class ListFollowedStartupsView(APIView):
+    """
+    A view that lists all followed startups by an investor
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Responses:
+        - 200 OK: Returns a list of followed startups.
+        - 400 Bad Request: If the user is not linked to any company or is not an enterprise.
+
+        Example Request:
+        GET /api/investor/saved-startups?search=tech&order_by=-created_at
+        """
+        try:
+            investor_company = request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
+        except UserToCompany.DoesNotExist:
+            if not request.user.company_memberships.exists():
+                return Response({"error": "User is not associated with any company."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "User is not linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        startups = CompanyProfile.objects.filter(
+            startup_investors__investor=investor_company
+        )
+        search_query = request.query_params.get("search", None)
+        order = request.query_params.get("order_by", "company_name")
+
+        if search_query:
+            startups = startups.filter(company_name__icontains=search_query)
+
+        allowed_order_fields = ["company_name", "created_at", "description", "updated_at"]
+        if order.lstrip("-") in allowed_order_fields:
+            startups = startups.order_by(order)
+
+        serializer = CompanyProfileSerializer(startups, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    
