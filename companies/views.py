@@ -137,4 +137,35 @@ class ListFollowedStartupsView(APIView):
         serializer = CompanyProfileSerializer(startups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class UnFollowStartupView(APIView):
+    """A view that allows an investor to unfollow a startup."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, startup_id):
+        """
+        Parameters:
+        startup_id (int): The ID of the startup to unfollow.
+
+        Response: 
+        A success message if unfollowed, or an error message.
+        """
+        try:
+            investor_company = request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
+        except UserToCompany.DoesNotExist:
+            if not request.user.company_memberships.exists():
+                return Response({"error": "User is not associated with any company."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "User is not linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            startup = get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
+        except Http404:
+            return Response({"error": "Startup not found."} ,status=status.HTTP_404_NOT_FOUND)
+
+        unfollow_relation = CompanyFollowers.objects.filter(investor=investor_company, startup=startup)
+        if not unfollow_relation.exists():
+            return Response({"detail": "You are not following this startup."}, status=status.HTTP_400_BAD_REQUEST)
+
+        unfollow_relation.delete()
+
+        return Response({"detail": "Successfully unfollowed the startup."}, status=status.HTTP_200_OK)
     
