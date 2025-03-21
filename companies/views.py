@@ -7,7 +7,7 @@ from .serializers import CompanyProfileSerializer, UserToCompanySerializer, Comp
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import CreateAPIView
 import logging
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -75,22 +75,34 @@ class RegisterCompanyView(CreateAPIView):
             raise
 
 
-class FollowStartupView(APIView):
+class InvestorStartupMixin:
+    """
+    Class for retrieving the investor's company and startup.
+    """
+    def get_investor_company(self, request):
+        """Retrieve the investor's enterprise company or raise a permission error."""
+        try:
+            return request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
+        except UserToCompany.DoesNotExist:
+            if not request.user.company_memberships.exists():
+                raise PermissionDenied("User is not associated with any company.")
+            raise PermissionDenied("User is not linked to an enterprise company.")
+    
+    def get_startup(self, startup_id):
+        """Retrieve a startup by ID or raise a not found error."""
+        try:
+            return get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
+        except Http404:
+            raise NotFound({"error": "Startup not found."})
+
+class FollowStartupView(APIView, InvestorStartupMixin):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, startup_id):
         """Allow an investor to follow a startup."""
-        try:
-            investor_company = request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
-        except UserToCompany.DoesNotExist:
-            if not request.user.company_memberships.exists():
-                return Response({"error": "User is not associated with any company."}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"error": "User is not linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
+        investor_company = self.get_investor_company(request)
+        startup = self.get_startup(startup_id)
 
-        try:
-            startup = get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
-        except Http404:
-            return Response({"error": "Startup not found."} ,status=status.HTTP_404_NOT_FOUND)
         if CompanyFollowers.objects.filter(investor=investor_company, startup=startup).exists():
             return Response({"detail": "You are already following this startup."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -99,7 +111,30 @@ class FollowStartupView(APIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-class ListFollowedStartupsView(APIView):
+class UnFollowStartupView(APIView, InvestorStartupMixin):
+    """A view that allows an investor to unfollow a startup."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, startup_id):
+        """
+        Parameters:
+        startup_id (int): The ID of the startup to unfollow.
+
+        Response: 
+        A success message if unfollowed, or an error message.
+        """
+        investor_company = self.get_investor_company(request)
+        startup = self.get_startup(startup_id)
+
+        unfollow_relation = CompanyFollowers.objects.filter(investor=investor_company, startup=startup)
+        if not unfollow_relation.exists():
+            return Response({"detail": "You are not following this startup."}, status=status.HTTP_400_BAD_REQUEST)
+
+        unfollow_relation.delete()
+
+        return Response({"detail": "Successfully unfollowed the startup."}, status=status.HTTP_200_OK)
+    
+class ListFollowedStartupsView(APIView, InvestorStartupMixin):
     """
     A view that lists all followed startups by an investor
     """
@@ -114,12 +149,7 @@ class ListFollowedStartupsView(APIView):
         Example Request:
         GET /api/investor/saved-startups?search=tech&order_by=-created_at
         """
-        try:
-            investor_company = request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
-        except UserToCompany.DoesNotExist:
-            if not request.user.company_memberships.exists():
-                return Response({"error": "User is not associated with any company."}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"error": "User is not linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
+        investor_company = self.get_investor_company(request)
         
         startups = CompanyProfile.objects.filter(
             startup_investors__investor=investor_company
@@ -136,36 +166,3 @@ class ListFollowedStartupsView(APIView):
 
         serializer = CompanyProfileSerializer(startups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class UnFollowStartupView(APIView):
-    """A view that allows an investor to unfollow a startup."""
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, startup_id):
-        """
-        Parameters:
-        startup_id (int): The ID of the startup to unfollow.
-
-        Response: 
-        A success message if unfollowed, or an error message.
-        """
-        try:
-            investor_company = request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
-        except UserToCompany.DoesNotExist:
-            if not request.user.company_memberships.exists():
-                return Response({"error": "User is not associated with any company."}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"error": "User is not linked to an enterprise company."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            startup = get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
-        except Http404:
-            return Response({"error": "Startup not found."} ,status=status.HTTP_404_NOT_FOUND)
-
-        unfollow_relation = CompanyFollowers.objects.filter(investor=investor_company, startup=startup)
-        if not unfollow_relation.exists():
-            return Response({"detail": "You are not following this startup."}, status=status.HTTP_400_BAD_REQUEST)
-
-        unfollow_relation.delete()
-
-        return Response({"detail": "Successfully unfollowed the startup."}, status=status.HTTP_200_OK)
-    
