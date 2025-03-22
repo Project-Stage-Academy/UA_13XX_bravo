@@ -129,3 +129,8 @@ class CompanyFollowersSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"investor": "The investor must be an enterprise company."})
 
         return data
+    
+class FollowedStartupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyProfile
+        fields = ["id", "company_name", "description", "website", "startup_logo"]
