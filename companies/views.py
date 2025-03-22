@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
-from .serializers import CompanyProfileSerializer, UserToCompanySerializer, CompanyFollowersSerializer, CompanyRegistrationSerializer
+from .serializers import CompanyProfileSerializer, UserToCompanySerializer, CompanyFollowersSerializer, CompanyRegistrationSerializer, FollowedStartupSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import CreateAPIView
 import logging
@@ -12,7 +12,9 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.db.utils import IntegrityError
+from rest_framework.pagination import PageNumberPagination
 logger = logging.getLogger(__name__)
+
 
 
 class CompanyProfileViewSet(viewsets.ModelViewSet):
@@ -90,10 +92,8 @@ class InvestorStartupMixin:
     
     def get_startup(self, startup_id):
         """Retrieve a startup by ID or raise a not found error."""
-        try:
-            return get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
-        except Http404:
-            raise NotFound({"error": "Startup not found."})
+        return get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
+
 
 class FollowStartupView(APIView, InvestorStartupMixin):
     permission_classes = [IsAuthenticated]
@@ -134,11 +134,17 @@ class UnFollowStartupView(APIView, InvestorStartupMixin):
 
         return Response({"detail": "Successfully unfollowed the startup."}, status=status.HTTP_200_OK)
     
+class CustomPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "limit"  
+    max_page_size = 100 
+
 class ListFollowedStartupsView(APIView, InvestorStartupMixin):
     """
     A view that lists all followed startups by an investor
     """
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
 
     def get(self, request):
         """
@@ -164,5 +170,7 @@ class ListFollowedStartupsView(APIView, InvestorStartupMixin):
         if order.lstrip("-") in allowed_order_fields:
             startups = startups.order_by(order)
 
-        serializer = CompanyProfileSerializer(startups, many=True)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(startups, request)
+        serializer = FollowedStartupSerializer(result_page, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
