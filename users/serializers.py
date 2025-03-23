@@ -180,52 +180,37 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
-    
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     company_id = serializers.IntegerField(required=False)
 
-    def validate(self, attrs: dict) -> dict:
-        """
-        Validate and add company_id to the token payload if provided.
-
-        Args:
-            attrs (dict): The attributes to validate.
-
-        Raises:
-            ValidationError: If company_id is provided but user is not associated with the company.
-
-        Returns:
-            dict: The validated data with company_id.
-        """
-        data = super().validate(attrs)
-        company_id = attrs.get("company_id")
-
-        if company_id:
-            user = self.user
-            if not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
-                raise serializers.ValidationError("User is not associated with this company.")
-            data["company_id"] = company_id
-
-        return data
-
     @classmethod
-    def get_token(cls, user: User) -> dict:
-        """
-        Customize the token payload to include company_id if provided.
-
-        Args:
-            user (User): The user for whom the token is generated.
-
-        Returns:
-            dict: The token payload with company_id if provided.
-        """
+    def get_token(cls, user):
         token = super().get_token(user)
-        token["email"] = user.email
 
-        company_id = cls.context["request"].data.get("company_id")
-        if company_id:
-            token["company_id"] = company_id
+        user_company = UserToCompany.objects.filter(user=user).first()
+        token["company_id"] = user_company.company.id if user_company else None
 
         return token
 
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        request = self.context["request"]
+
+        company_id = request.data.get("company_id", None)
+
+        user_companies = UserToCompany.objects.filter(user=self.user).values_list("company_id", flat=True)
+
+        if company_id:
+            if company_id not in user_companies:
+                alternative_company_id = user_companies.first() if user_companies else None
+                if not alternative_company_id:
+                    raise serializers.ValidationError({"company_id": "You are not associated with this company and have no available alternatives."})
+                data["company_id"] = alternative_company_id
+            else:
+                data["company_id"] = company_id
+        else:
+            data["company_id"] = user_companies.first() if user_companies else None
+
+        return data

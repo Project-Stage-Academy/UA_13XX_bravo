@@ -23,6 +23,10 @@ from datetime import timedelta
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework import serializers
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 User = get_user_model()
@@ -178,12 +182,9 @@ class PasswordResetConfirmView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user) -> dict:
-        token = super().get_token(user)
-        token['email'] = user.email 
-        return token
+    
+
+
 
 class LoginView(TokenObtainPairView):
     """
@@ -193,6 +194,21 @@ class LoginView(TokenObtainPairView):
     information in the token payload.
     """
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        response_data = {
+            "access": data["access"],
+            "refresh": data["refresh"],
+            "company_id": data["company_id"]
+        }
+
+        return Response(response_data)
+
+
 
 
 
