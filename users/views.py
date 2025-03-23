@@ -24,6 +24,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import serializers
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 User = get_user_model()
@@ -181,34 +184,6 @@ class PasswordResetConfirmView(APIView):
 
     
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    company_id = serializers.IntegerField(required=False) 
-
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        user_company = UserToCompany.objects.filter(user=user).first()
-        company_id = user_company.company.id if user_company else None
-        token["company_id"] = company_id 
-        return token
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        request = self.context["request"]
-
-        company_id = request.data.get("company_id", None)
-
-        if company_id and not UserToCompany.objects.filter(user=self.user, company_id=company_id).exists():
-            raise serializers.ValidationError("You are not associated with this company.")
-
-        if not company_id:
-            user_company = UserToCompany.objects.filter(user=self.user).first()
-            company_id = user_company.company.id if user_company else None
-
-        data["company_id"] = company_id 
-        return data
-
 
 
 class LoginView(TokenObtainPairView):
@@ -219,6 +194,21 @@ class LoginView(TokenObtainPairView):
     information in the token payload.
     """
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        response_data = {
+            "access": data["access"],
+            "refresh": data["refresh"],
+            "company_id": data["company_id"]
+        }
+
+        return Response(response_data)
+
+
 
 
 
