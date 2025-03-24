@@ -27,6 +27,8 @@ pylint==3.3.4
 pylint-django==2.6.1
 django-allauth==65.4.1
 phonenumberslite==9.0.0
-pillow==9.0.0
+pillow==9.1.0
 pytest==8.0.0
-pytest-django==4.0.0
+django-filter==25.1
+pytest-django==4.5.2
+
