@@ -20,9 +20,9 @@ class CompanyProfile(models.Model):
     company_name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     website = models.URLField(blank=True, null=True)
-    startup_logo = models.URLField(blank=True, null=True, default="")
+    startup_logo = models.URLField(blank=True, default="")
     industry = models.CharField(max_length=255, blank=True, null=True)
-    required_funding = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    required_funding = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True, default=0.00)
     company_size = models.PositiveIntegerField(blank=True, null=True)  # або models.CharField(...) для категорій
     phone_number = PhoneNumberField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
