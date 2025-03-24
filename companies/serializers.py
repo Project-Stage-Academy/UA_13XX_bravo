@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import (
     CompanyProfile,
     UserToCompany,
-    COMPANY_TYPES,
     StartupViewHistory,
     CompanyFollowers,
     CompanyType,
