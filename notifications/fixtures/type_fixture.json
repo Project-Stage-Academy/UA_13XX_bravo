@@ -1,0 +1,52 @@
+[
+  {
+    "model": "notifications.type",
+    "pk": 1,
+    "fields": {"name": "new_follower"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 2,
+    "fields": {"name": "new_comment"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 3,
+    "fields": {"name": "new_like"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 4,
+    "fields": {"name": "new_post"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 5,
+    "fields": {"name": "new_message"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 6,
+    "fields": {"name": "new_report"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 7,
+    "fields": {"name": "new_request"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 8,
+    "fields": {"name": "new_connection"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 9,
+    "fields": {"name": "new_recommendation"}
+  },
+  {
+    "model": "notifications.type",
+    "pk": 10,
+    "fields": {"name": "new_system_notification"}
+  }
+]
