@@ -2,51 +2,102 @@ from rest_framework import serializers
 from .models import Notification, NotificationPreference, Type, User, Entity
 
 
+class EntitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entity
+        fields = "__all__"
+
+
 class NotificationSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False
+    )
     content = serializers.CharField(max_length=500, required=True)
     read = serializers.BooleanField(default=False)
-    entity = serializers.PrimaryKeyRelatedField(
-        queryset=Entity.objects.all(), allow_null=True, required=False
-    )
+    entity = EntitySerializer(required=False, allow_null=True)
+    type = serializers.CharField()
 
     class Meta:
         model = Notification
-        fields = "__all__"
-
-    def validate_content(self, value):
-        if value is None or not value.strip():
-            raise serializers.ValidationError("Content cannot be empty.")
-        return value
+        fields = fields = [
+            "id",
+            "user",
+            "entity",
+            "type",
+            "content",
+            "created_at",
+            "read",
+        ]
 
     def validate(self, data):
-        entity = data.get("entity", None)
-
-        existing_query = Notification.objects.filter(
-            user=data["user"], type=data["type"], entity=entity
-        )
-
-        if self.instance:
-            existing_query = existing_query.exclude(id=self.instance.id)
-
-        if existing_query.exists():
-            raise serializers.ValidationError(
-                "A notification with this user, type, and entity already exists."
-            )
+        request = self.context.get("request")
+        if request and request.method != "PATCH":
+            if (
+                data.get("user", None) is None
+                or data.get("type", None) is None
+                or data.get("content", None) is None
+            ):
+                raise serializers.ValidationError(
+                    "User, type, and content are required fields."
+                )
 
         return data
+
+    def validate_type(self, value):
+        """Validate if the provided type name exists in the database."""
+        type_obj = Type.objects.filter(name=value).first()
+        if not type_obj:
+            raise serializers.ValidationError(
+                {
+                    "type": f"Type '{value}' does not exist.",
+                    "available_types": list(
+                        Type.objects.values_list("name", flat=True)
+                    ),
+                }
+            )
+        return type_obj
+
+    def create(self, validated_data):
+        entity_data = validated_data.pop("entity", None)
+
+        entity = None
+        if entity_data:
+            entity, _ = Entity.objects.get_or_create(**entity_data)
+
+        notification = Notification.objects.create(entity=entity, **validated_data)
+        return notification
+
+    def update(self, instance, validated_data):
+        entity_data = validated_data.pop("entity", None)
+
+        if entity_data:
+            entity, _ = Entity.objects.get_or_create(**entity_data)
+            instance.entity = entity
+
+        instance.content = validated_data.get("content", instance.content)
+        instance.read = validated_data.get("read", instance.read)
+
+        type_obj = validated_data.get("type", instance.type)
+        if isinstance(type_obj, Type):
+            instance.type = type_obj
+        elif isinstance(type_obj, str):
+            instance.type = Type.objects.get(name=type_obj)
+
+        instance.save()
+        return instance
 
 
 class NotificationPreferenceSerializer(serializers.ModelSerializer):
     enabled = serializers.BooleanField(default=True)
     type = serializers.CharField()  # Using CharField instead of SlugRelatedField
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False
+    )
 
     class Meta:
         model = NotificationPreference
         fields = ["user", "type", "enabled"]
         read_only_fields = ["user"]
-        user = serializers.PrimaryKeyRelatedField(
-            queryset=User.objects.all(), required=False
-        )
 
     def validate_type(self, value):
         """Validate if the provided type name exists in the database."""

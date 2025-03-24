@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db import transaction
 from .models import Notification, NotificationPreference, Type
 from .serializers import (
     NotificationSerializer,
@@ -15,7 +16,6 @@ from .permissions import IsOwner
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticated, IsOwner]
 
     def get_queryset(self):
         return (
@@ -27,18 +27,43 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"])
     def mark_as_read(self, request, pk=None):
         notification = self.get_object()
+        if notification.user != request.user:
+            return Response(
+                {"detail": "Not allowed."}, status=status.HTTP_403_FORBIDDEN
+            )
+
         notification.read = True
         notification.save()
         return Response({"status": "marked as read"})
 
     @action(detail=False, methods=["patch"])
     def mark_all_as_read(self, request):
-        notifications = Notification.objects.filter(user=request.user, is_read=False)
-        count = notifications.update(is_read=True)
+        with transaction.atomic():
+            notifications = Notification.objects.filter(user=request.user, read=False)
+            count = notifications.update(read=True)
         return Response({"status": f"{count} notifications marked as read"})
 
+    @action(detail=True, methods=["patch"])
+    def mark_as_unread(self, request, pk=None):
+        notification = self.get_object()
+        if notification.user != request.user:
+            return Response(
+                {"detail": "Not allowed."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        notification.read = False
+        notification.save()
+        return Response({"status": "marked as unread"})
+
+    @action(detail=False, methods=["patch"])
+    def mark_all_as_unread(self, request):
+        with transaction.atomic():
+            notifications = Notification.objects.filter(user=request.user, read=True)
+            count = notifications.update(read=False)
+        return Response({"status": f"{count} notifications marked as unread"})
+
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user.id)
+        serializer.save()
 
 
 class NotificationPreferenceViewSet(viewsets.ModelViewSet):
