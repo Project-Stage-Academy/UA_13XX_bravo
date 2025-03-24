@@ -1,26 +1,40 @@
-from rest_framework import viewsets
-from rest_framework import status
+from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
-from .serializers import CompanyProfileSerializer, UserToCompanySerializer, CompanyFollowersSerializer, CompanyRegistrationSerializer, FollowedStartupSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import CreateAPIView
+from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
 import logging
 from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
 from django.db import transaction
+from rest_framework import viewsets, filters, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.db.utils import IntegrityError
 from rest_framework.pagination import PageNumberPagination
+from .serializers import (
+    CompanyProfileSerializer,
+    UserToCompanySerializer,
+    CompanyFollowersSerializer,
+    CompanyRegistrationSerializer,
+    FollowedStartupSerializer,
 logger = logging.getLogger(__name__)
-
 
 
 class CompanyProfileViewSet(viewsets.ModelViewSet):
     queryset = CompanyProfile.objects.all()
     serializer_class = CompanyProfileSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["company_name", "description"]
+    filterset_fields = ["type", "industry", "required_funding", "company_size"]
+    ordering_fields = ["company_size", "required_funding", "created_at", "updated_at"]
 
     def perform_create(self, serializer):
         """When creating a company, it automatically adds a user connection."""
