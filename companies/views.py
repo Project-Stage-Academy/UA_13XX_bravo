@@ -1,12 +1,27 @@
-from rest_framework import viewsets
-from .models import CompanyProfile, UserToCompany
-from .serializers import CompanyProfileSerializer, UserToCompanySerializer, CompanyRegistrationSerializer
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import CreateAPIView
-import logging
-from rest_framework.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 
+from rest_framework import viewsets, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
+from rest_framework.decorators import action
+from rest_framework.generics import CreateAPIView
+from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
+import logging
+
+from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType, StartupViewHistory
+from .serializers import (
+    CompanyProfileSerializer,
+    UserToCompanySerializer,
+    CompanyFollowersSerializer,
+    CompanyRegistrationSerializer,
+    FollowedStartupSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,3 +86,46 @@ class RegisterCompanyView(CreateAPIView):
             logger.error(f"Error registering company: {e}")
             raise
 
+
+
+    
+
+class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint to list, add and clear the viewing history of startup profiles.
+    Only authenticated users can access their own history.
+    """
+    serializer_class = StartupViewHistorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
+
+    @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
+    def mark_as_viewed(self, request, pk=None):
+        """
+        Record a view for the specified startup (company) by the authenticated user.
+        """
+        try:
+            company = CompanyProfile.objects.get(pk=pk)
+        except CompanyProfile.DoesNotExist:
+            return Response({"detail": "Company not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        StartupViewHistory.objects.update_or_create(
+            user=request.user,
+            company=company,
+            defaults={"viewed_at": timezone.now()},
+        )
+
+        return Response({"detail": "View recorded successfully."}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
+    def clear_view_history(self, request):
+        """
+        Delete all startup view history records for the authenticated user.
+        """
+        deleted_count, _ = StartupViewHistory.objects.filter(user=request.user).delete()
+        return Response(
+            {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},
+            status=status.HTTP_200_OK
+        )
