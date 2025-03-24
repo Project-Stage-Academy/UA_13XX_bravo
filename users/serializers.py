@@ -200,17 +200,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         company_id = request.data.get("company_id", None)
 
-        user_companies = UserToCompany.objects.filter(user=self.user).values_list("company_id", flat=True)
-
         if company_id:
-            if company_id not in user_companies:
-                alternative_company_id = user_companies.first() if user_companies else None
-                if not alternative_company_id:
-                    raise serializers.ValidationError({"company_id": "You are not associated with this company and have no available alternatives."})
-                data["company_id"] = alternative_company_id
-            else:
-                data["company_id"] = company_id
-        else:
-            data["company_id"] = user_companies.first() if user_companies else None
+            is_valid_company = UserToCompany.objects.filter(user=self.user, company_id=company_id).exists()
+            if not is_valid_company:
+                raise serializers.ValidationError({"company_id": "You are not associated with this company."})
+
+        user_company = UserToCompany.objects.filter(user=self.user).first()
+        data["company_id"] = user_company.company.id if user_company else None
 
         return data
