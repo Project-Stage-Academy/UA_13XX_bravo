@@ -1,8 +1,6 @@
 from rest_framework import serializers
-from .models import CompanyProfile, UserToCompany
+from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
 from django.db import transaction    
-
-
     
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
@@ -77,10 +75,6 @@ class UserToCompanySerializer(serializers.ModelSerializer):
         return data
     
 
-
-
-
-
 class CompanyRegistrationSerializer(serializers.ModelSerializer):
     """
     Serializer for registering a new company.
@@ -117,3 +111,21 @@ class CompanyRegistrationSerializer(serializers.ModelSerializer):
 
         return company
 
+
+class CompanyFollowersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyFollowers
+        fields = ["startup", "created_at"]
+
+    def validate(self, data):
+        """Ensure that company has the right type and investor is an enterprise."""
+        startup = data.get("startup")
+        investor = data.get("investor")
+
+        if startup.type != CompanyType.STARTUP:
+            raise serializers.ValidationError({"startup": "The company must be a startup."})
+
+        if investor.type != CompanyType.ENTERPRISE:
+            raise serializers.ValidationError({"investor": "The investor must be an enterprise company."})
+
+        return data
