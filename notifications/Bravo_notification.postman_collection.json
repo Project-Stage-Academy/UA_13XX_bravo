@@ -89,7 +89,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"type\": \"new_like\"\n}",
+							"raw": "{\n    \"type\": \"2\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -299,6 +299,671 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Company",
+			"item": [
+				{
+					"name": "Company list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful PUT request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQyNDEyLCJpYXQiOjE3NDEzNDA2MTIsImp0aSI6IjZlZTRhNjA1OGUwNjRlOGZhOTVjMDYzMGQwYzA5MGM2IiwidXNlcl9pZCI6ImU3MGVhODI3LWRmMDItNGRjNC1hOTc3LTUwZjljZjQzNDBiOSJ9.Hh8GHQAwaHsZLCweK_0ae4C6pb_MdbDh1PU9mzG0lkM",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Add your name in the body\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/company/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"company",
+								""
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Company create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful PUT request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQyNDEyLCJpYXQiOjE3NDEzNDA2MTIsImp0aSI6IjZlZTRhNjA1OGUwNjRlOGZhOTVjMDYzMGQwYzA5MGM2IiwidXNlcl9pZCI6ImU3MGVhODI3LWRmMDItNGRjNC1hOTc3LTUwZjljZjQzNDBiOSJ9.Hh8GHQAwaHsZLCweK_0ae4C6pb_MdbDh1PU9mzG0lkM",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"company_name\": \"Space Innovators14\",\n  \"description\": \"A startup focusing on low-cost satellite technology.\",\n  \"website\": \"https://space-innovators.example.com\",\n  \"startup_logo\": \"http://test.com/logos/space_innovators.png\",\n  \"type\": \"startup\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/company/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"company",
+								""
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Company [id]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful PUT request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQ1MTk3LCJpYXQiOjE3NDEzNDMzOTcsImp0aSI6ImI1N2FiZDdjMzYyMzQ5ZGQ5N2YwYmMxMzg4MTJjODNlIiwidXNlcl9pZCI6ImUxMThjMWM2LTMyZGEtNDQzMS1iNWY4LTY4NDY2MzNjYTA5YyJ9.6lMXVnHpnrsTkS1QwvKCfnRsIEgKsnGdatwuht5F6tQ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQyNDEyLCJpYXQiOjE3NDEzNDA2MTIsImp0aSI6IjZlZTRhNjA1OGUwNjRlOGZhOTVjMDYzMGQwYzA5MGM2IiwidXNlcl9pZCI6ImU3MGVhODI3LWRmMDItNGRjNC1hOTc3LTUwZjljZjQzNDBiOSJ9.Hh8GHQAwaHsZLCweK_0ae4C6pb_MdbDh1PU9mzG0lkM",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Add your name in the body\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/company/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"1"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Company",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful DELETE request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQ1MTk3LCJpYXQiOjE3NDEzNDMzOTcsImp0aSI6ImI1N2FiZDdjMzYyMzQ5ZGQ5N2YwYmMxMzg4MTJjODNlIiwidXNlcl9pZCI6ImUxMThjMWM2LTMyZGEtNDQzMS1iNWY4LTY4NDY2MzNjYTA5YyJ9.6lMXVnHpnrsTkS1QwvKCfnRsIEgKsnGdatwuht5F6tQ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/company/1/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"1",
+								""
+							]
+						},
+						"description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Full update Company",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQ1MTk3LCJpYXQiOjE3NDEzNDMzOTcsImp0aSI6ImI1N2FiZDdjMzYyMzQ5ZGQ5N2YwYmMxMzg4MTJjODNlIiwidXNlcl9pZCI6ImUxMThjMWM2LTMyZGEtNDQzMS1iNWY4LTY4NDY2MzNjYTA5YyJ9.6lMXVnHpnrsTkS1QwvKCfnRsIEgKsnGdatwuht5F6tQ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"company_name\": \"GreenTech Solutions\",\n  \"website\": \"http://google.com\",\n  \"startup_logo\": \"http://google.com/logo.jpg\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/company/3/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Partially update Company",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQ1MTk3LCJpYXQiOjE3NDEzNDMzOTcsImp0aSI6ImI1N2FiZDdjMzYyMzQ5ZGQ5N2YwYmMxMzg4MTJjODNlIiwidXNlcl9pZCI6ImUxMThjMWM2LTMyZGEtNDQzMS1iNWY4LTY4NDY2MzNjYTA5YyJ9.6lMXVnHpnrsTkS1QwvKCfnRsIEgKsnGdatwuht5F6tQ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"website\": \"http://google.com\",\n  \"startup_logo\": \"http://google.com/logo.jpg\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/company/3/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Notification",
+			"item": [
+				{
+					"name": "List",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful PUT request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQyNDEyLCJpYXQiOjE3NDEzNDA2MTIsImp0aSI6IjZlZTRhNjA1OGUwNjRlOGZhOTVjMDYzMGQwYzA5MGM2IiwidXNlcl9pZCI6ImU3MGVhODI3LWRmMDItNGRjNC1hOTc3LTUwZjljZjQzNDBiOSJ9.Hh8GHQAwaHsZLCweK_0ae4C6pb_MdbDh1PU9mzG0lkM",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Add your name in the body\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/notifications/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								""
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful PUT request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQyNDEyLCJpYXQiOjE3NDEzNDA2MTIsImp0aSI6IjZlZTRhNjA1OGUwNjRlOGZhOTVjMDYzMGQwYzA5MGM2IiwidXNlcl9pZCI6ImU3MGVhODI3LWRmMDItNGRjNC1hOTc3LTUwZjljZjQzNDBiOSJ9.Hh8GHQAwaHsZLCweK_0ae4C6pb_MdbDh1PU9mzG0lkM",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"string\",\n  \"read\": false,\n  \"user\": \"34b5416b-3b7c-45fc-b854-61b7c3a4bde3\",\n  \"type\": \"new_follower\",\n  \"entity\": null\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/notifications/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								""
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "By [id]",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful PUT request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQxMzQyNDEyLCJpYXQiOjE3NDEzNDA2MTIsImp0aSI6IjZlZTRhNjA1OGUwNjRlOGZhOTVjMDYzMGQwYzA5MGM2IiwidXNlcl9pZCI6ImU3MGVhODI3LWRmMDItNGRjNC1hOTc3LTUwZjljZjQzNDBiOSJ9.Hh8GHQAwaHsZLCweK_0ae4C6pb_MdbDh1PU9mzG0lkM",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"1"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful DELETE request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/2/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"2",
+								""
+							]
+						},
+						"description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Full update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"string\",\n  \"read\": false,\n  \"user\": \"34b5416b-3b7c-45fc-b854-61b7c3a4bde3\",\n  \"type\": \"new_follower\",\n  \"entity\": {\n        \"name\": \"Holy Moly\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/notifications/3/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Partially update",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"entity\": {\n        \"name\": \"Holy2 Moly\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/notifications/preferences/7/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"preferences",
+								"7",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark as read",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/5/mark_as_read/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"5",
+								"mark_as_read",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark as unread",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/5/mark_as_unread/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"5",
+								"mark_as_unread",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark as all read",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/mark_all_as_read/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"mark_all_as_read",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark as all unread",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/mark_all_as_unread/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"mark_all_as_unread",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		}
 	],
 	"auth": {
@@ -306,7 +971,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyMjM3NDc5LCJpYXQiOjE3NDIyMzU2NzksImp0aSI6IjBjMzY1ZDg3ZTdjNTRiZGE5MGYwOWQ5ZGEwZWM0NTQyIiwidXNlcl9pZCI6IjM0YjU0MTZiLTNiN2MtNDVmYy1iODU0LTYxYjdjM2E0YmRlMyJ9.960ERC2AD3kGaj9KnJjhCZV7jQTjRIr5Avwx2mklisA",
+				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyODE2MTg3LCJpYXQiOjE3NDI4MTQzODcsImp0aSI6IjIwZjZjZGJkNDJlNTRiZDQ4NmMwOGUzNGQ0NTdhMGVmIiwidXNlcl9pZCI6IjM0YjU0MTZiLTNiN2MtNDVmYy1iODU0LTYxYjdjM2E0YmRlMyJ9.f2ff5L0uJJeoarufhi-VPeejpFJ18Nx0trPOZMBOaos",
 				"type": "string"
 			}
 		]
