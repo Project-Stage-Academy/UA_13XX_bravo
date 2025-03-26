@@ -89,6 +89,8 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",  # for ASGI server
+    "channels",  # for runworker and other channels commands
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -114,6 +116,9 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
 ]
+
+ASGI_APPLICATION = "UA_13XX_bravo.asgi.application"
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
