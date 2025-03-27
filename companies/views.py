@@ -23,6 +23,8 @@ from .serializers import (
     FollowedStartupSerializer,
     StartupViewHistorySerializer,
 )
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +91,6 @@ class RegisterCompanyView(CreateAPIView):
 
 
 
-
 class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint to list, add and clear the viewing history of startup profiles.
@@ -98,27 +99,35 @@ class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = StartupViewHistorySerializer
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Get the view history of a startup for the authenticated user.",
+        responses={200: StartupViewHistorySerializer(many=True)},
+        manual_parameters=[
+            openapi.Parameter('company_id', openapi.IN_QUERY, description="Company ID to filter history", type=openapi.TYPE_INTEGER)
+        ]
+    )
     def get_queryset(self):
-        # Перевірка, чи користувач має доступ до цієї компанії
         company_id = self.request.query_params.get("company_id", None)
         if company_id:
-            # Перевіряємо, чи є у користувача компанія
             if not UserToCompany.objects.filter(user=self.request.user, company_id=company_id).exists():
                 raise PermissionDenied("You do not have permission to view this company's history.")
+            if not self.request.user.role == "investor":
+                raise PermissionDenied("You must be an investor to view this company's history.")
         
-        # Повертаємо історію переглядів для поточного користувача
         return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
 
+    @swagger_auto_schema(
+        operation_description="Mark the startup as viewed for the authenticated user.",
+        responses={200: openapi.Response('View recorded successfully.')}
+    )
     @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
     def mark_as_viewed(self, request, pk=None):
-        """
-        Record a view for the specified startup (company) by the authenticated user.
-        The user must be associated with the company.
-        """
-        company_id = pk  # company_id передається як pk
+        company_id = pk
         if not UserToCompany.objects.filter(user=request.user, company_id=company_id).exists():
             raise PermissionDenied("You do not have permission to mark this startup as viewed.")
-
+        if not request.user.role == "investor":
+            raise PermissionDenied("You must be an investor to mark this startup as viewed.")
+        
         try:
             company = CompanyProfile.objects.get(pk=company_id)
         except CompanyProfile.DoesNotExist:
@@ -132,11 +141,15 @@ class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response({"detail": "View recorded successfully."}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_description="Clear all viewed history for the authenticated user.",
+        responses={200: openapi.Response('Successfully cleared the viewed startup(s).')}
+    )
     @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
     def clear_view_history(self, request):
-        """
-        Delete all startup view history records for the authenticated user.
-        """
+        if not request.user.role == "investor":
+            raise PermissionDenied("You must be an investor to clear the view history.")
+        
         deleted_count, _ = StartupViewHistory.objects.filter(user=request.user).delete()
         return Response(
             {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},

@@ -9,7 +9,24 @@ from .views import (
 )
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_yasg import openapi
+from rest_framework_yasg.views import get_schema_view
 
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Startup API",
+      default_version='v1',
+      description="API для взаємодії з компаніями та історією переглядів стартапів",
+      terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="contact@startup.local"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+)
+
+urlpatterns = [
+    path('swagger/', schema_view.as_view(), name='swagger-ui'),
+]
 
 router = DefaultRouter()
 router.register("company", CompanyProfileViewSet, basename="companyprofile")
