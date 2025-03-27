@@ -16,6 +16,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+from mongoengine import connect
 
 
 load_dotenv()
@@ -115,6 +116,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "rest_framework_mongoengine",
 ]
 
 ASGI_APPLICATION = "UA_13XX_bravo.asgi.application"
@@ -166,16 +168,23 @@ WSGI_APPLICATION = "UA_13XX_bravo.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "mydatabase"),
-        "USER": os.getenv("DB_USER", "admin"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "securepassword"),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "5432"),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("DB_NAME", "mydatabase"),
+        'USER': os.getenv("DB_USER", "admin"),
+        'PASSWORD': os.getenv("DB_PASSWORD", "securepassword"),
+        'HOST': os.getenv("DB_HOST", "localhost"),
+        'PORT': os.getenv("DB_PORT", "5432"),
     }
 }
-DATABASES["default"]["CONN_MAX_AGE"] = 600
+
+connect(
+    db=os.getenv('MONGO_DB_NAME'),  
+    username=os.getenv('MONGO_USER'),  
+    password=os.getenv('MONGO_PASSWORD'), 
+    host=os.getenv('MONGO_HOST'), 
+    authentication_source=os.getenv('MONGO_AUTH_DB') 
+)
 
 
 AUTH_USER_MODEL = "users.User"

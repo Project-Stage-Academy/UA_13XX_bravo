@@ -44,6 +44,10 @@ urlpatterns += [
 ]
 
 urlpatterns += [
+    path("api/communications/", include("communications.urls")),
+]
+
+urlpatterns += [
     path("api/", include("companies.urls")),
 ]
 
