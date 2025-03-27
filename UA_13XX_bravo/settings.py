@@ -63,6 +63,11 @@ DJOSER = {
     },
 }
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
@@ -116,6 +121,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
 ]
+
 
 ASGI_APPLICATION = "UA_13XX_bravo.asgi.application"
 
