@@ -21,6 +21,7 @@ from .serializers import (
     CompanyFollowersSerializer,
     CompanyRegistrationSerializer,
     FollowedStartupSerializer,
+    StartupViewHistorySerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,26 +89,38 @@ class RegisterCompanyView(CreateAPIView):
 
 
 
-    
 
 class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint to list, add and clear the viewing history of startup profiles.
-    Only authenticated users can access their own history.
+    Only authenticated users with a valid company association can access.
     """
     serializer_class = StartupViewHistorySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # Перевірка, чи користувач має доступ до цієї компанії
+        company_id = self.request.query_params.get("company_id", None)
+        if company_id:
+            # Перевіряємо, чи є у користувача компанія
+            if not UserToCompany.objects.filter(user=self.request.user, company_id=company_id).exists():
+                raise PermissionDenied("You do not have permission to view this company's history.")
+        
+        # Повертаємо історію переглядів для поточного користувача
         return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
 
     @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
     def mark_as_viewed(self, request, pk=None):
         """
         Record a view for the specified startup (company) by the authenticated user.
+        The user must be associated with the company.
         """
+        company_id = pk  # company_id передається як pk
+        if not UserToCompany.objects.filter(user=request.user, company_id=company_id).exists():
+            raise PermissionDenied("You do not have permission to mark this startup as viewed.")
+
         try:
-            company = CompanyProfile.objects.get(pk=pk)
+            company = CompanyProfile.objects.get(pk=company_id)
         except CompanyProfile.DoesNotExist:
             return Response({"detail": "Company not found."}, status=status.HTTP_404_NOT_FOUND)
 

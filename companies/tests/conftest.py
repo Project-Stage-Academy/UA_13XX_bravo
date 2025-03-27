@@ -20,12 +20,17 @@ def test_user(db):
 
 @pytest.fixture
 def test_companies(db):
-    return [
+    """
+    This fixture creates test companies for use in the tests.
+    It returns a list of CompanyProfile objects.
+    """
+    companies = [
         CompanyProfile.objects.create(company_name="AlphaTech", description="AI"),
         CompanyProfile.objects.create(company_name="BetaSoft", description="Cloud"),
     ]
-    
-    
+    return companies
+
+
 @pytest.fixture
 def another_user(db):
     return User.objects.create_user(
