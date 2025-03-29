@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.utils import timezone
+from django.utils import timezone ,now
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 
@@ -25,6 +25,7 @@ from .serializers import (
 )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,17 @@ class RegisterCompanyView(CreateAPIView):
 
 
 
+def record_view(user, company):
+    """
+    Record the view of a startup by a user, or update the viewed_at timestamp if the user has already viewed the startup.
+    """
+    if user.is_authenticated:
+        StartupViewHistory.objects.update_or_create(
+            user=user,
+            company=company,
+            defaults={"viewed_at": now()}
+        )
+
 class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint to list, add and clear the viewing history of startup profiles.
@@ -98,6 +110,15 @@ class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = StartupViewHistorySerializer
     permission_classes = [IsAuthenticated]
+
+    def _check_permissions(self, user, company_id=None):
+        """
+        Helper method to check permissions for the current user.
+        """
+        if company_id and not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
+            raise PermissionDenied("You do not have permission to access this company's history.")
+        if user.role.name != UserRole.INVESTOR:
+            raise PermissionDenied("Only investors can perform this action.")
 
     @swagger_auto_schema(
         operation_description="Get the view history of a startup for the authenticated user.",
@@ -109,37 +130,18 @@ class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         company_id = self.request.query_params.get("company_id", None)
         if company_id:
-            if not UserToCompany.objects.filter(user=self.request.user, company_id=company_id).exists():
-                raise PermissionDenied("You do not have permission to view this company's history.")
-            if not self.request.user.role == "investor":
-                raise PermissionDenied("You must be an investor to view this company's history.")
-        
+            self._check_permissions(self.request.user, company_id)  # Check permissions
         return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
 
     @swagger_auto_schema(
-        operation_description="Mark the startup as viewed for the authenticated user.",
-        responses={200: openapi.Response('View recorded successfully.')}
+        operation_description="Retrieve the details of a startup profile and record the view for the authenticated user.",
+        responses={200: StartupViewHistorySerializer()},
     )
-    @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
-    def mark_as_viewed(self, request, pk=None):
-        company_id = pk
-        if not UserToCompany.objects.filter(user=request.user, company_id=company_id).exists():
-            raise PermissionDenied("You do not have permission to mark this startup as viewed.")
-        if not request.user.role == "investor":
-            raise PermissionDenied("You must be an investor to mark this startup as viewed.")
-        
-        try:
-            company = CompanyProfile.objects.get(pk=company_id)
-        except CompanyProfile.DoesNotExist:
-            return Response({"detail": "Company not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        StartupViewHistory.objects.update_or_create(
-            user=request.user,
-            company=company,
-            defaults={"viewed_at": timezone.now()},
-        )
-
-        return Response({"detail": "View recorded successfully."}, status=status.HTTP_200_OK)
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        record_view(request.user, instance)  # Record the view using the record_view function
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     @swagger_auto_schema(
         operation_description="Clear all viewed history for the authenticated user.",
@@ -147,10 +149,13 @@ class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
     def clear_view_history(self, request):
-        if not request.user.role == "investor":
-            raise PermissionDenied("You must be an investor to clear the view history.")
-        
+        self._check_permissions(request.user)  # Check permissions
+    
         deleted_count, _ = StartupViewHistory.objects.filter(user=request.user).delete()
+    
+        if deleted_count == 0:
+            return Response({"message": "No viewed startups to clear."}, status=status.HTTP_200_OK)
+    
         return Response(
             {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},
             status=status.HTTP_200_OK

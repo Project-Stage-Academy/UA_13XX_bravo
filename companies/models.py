@@ -106,6 +106,9 @@ class StartupViewHistory(models.Model):
     viewed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-viewed_at"]  
-        unique_together = ("user", "company")  
+        ordering = ["-viewed_at"]
         verbose_name_plural = "Startup View History"
+        indexes = [
+            models.Index(fields=['user', 'company']), 
+            models.Index(fields=['viewed_at']),        
+        ]
