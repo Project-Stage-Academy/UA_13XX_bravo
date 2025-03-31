@@ -166,6 +166,7 @@ class ListFollowedStartupsView(APIView, InvestorStartupMixin):
         Example Request:
         GET /api/investor/saved-startups?search=tech&order_by=-created_at
         """
+        
         investor_company = self.get_investor_company(request)
         
         startups = CompanyProfile.objects.filter(
@@ -174,17 +175,21 @@ class ListFollowedStartupsView(APIView, InvestorStartupMixin):
         search_query = request.query_params.get("search", None)
         order = request.query_params.get("order_by", "company_name")
 
+        ALLOWED_ORDER_FIELDS = {"company_name", "created_at", "description", "updated_at"}
+        def is_valid_ordering(field):
+            return field.lstrip("-") in ALLOWED_ORDER_FIELDS
+
         if search_query:
             startups = startups.filter(company_name__icontains=search_query)
 
-        allowed_order_fields = ["company_name", "created_at", "description", "updated_at"]
-        if order.lstrip("-") in allowed_order_fields:
+        if is_valid_ordering(order):
             startups = startups.order_by(order)
 
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(startups, request)
         serializer = FollowedStartupSerializer(result_page, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
     
 
