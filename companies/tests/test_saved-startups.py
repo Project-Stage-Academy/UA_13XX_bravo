@@ -62,8 +62,8 @@ class SavedStartupsTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
         response = self.client.get("/api/investor/saved-startups?order_by=-created_at")
 
-        startup_names = {startup["company_name"] for startup in response.data}
-        self.assertSetEqual(startup_names, {"Startup 2", "Startup 1"})
+        startup_names = [startup["company_name"] for startup in response.data]
+        self.assertEqual(startup_names, ["Startup 2", "Startup 1"])  
         startup_descriptions = {startup["description"] for startup in response.data}
         self.assertSetEqual(startup_descriptions, {"AI startup", "Company to test products"})
     
@@ -100,6 +100,19 @@ class SavedStartupsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.assertEqual(response.data['detail'], "User is not linked to an enterprise company.")
+    
+    def test_get_saved_startups_invalid_query(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
+        response = self.client.get("/api/investor/saved-startups?order_by=unknown_field")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)  
+
+        startup_names = {startup["company_name"] for startup in response.data}
+        self.assertSetEqual(startup_names, {"Startup 1", "Startup 2"})
+
+        startup_descriptions = {startup["description"] for startup in response.data}
+        self.assertSetEqual(startup_descriptions, {"Company to test products", "AI startup"})
+
+
         
 
 
