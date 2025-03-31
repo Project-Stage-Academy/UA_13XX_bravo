@@ -176,7 +176,7 @@ DATABASES = {
         "NAME": os.getenv("DB_NAME", "mydatabase"),
         "USER": os.getenv("DB_USER", "admin"),
         "PASSWORD": os.getenv("DB_PASSWORD", "securepassword"),
-        "HOST": os.getenv("DB_HOST", "postgres_db"),
+        "HOST": os.getenv("DB_HOST", "localhost"),
         "PORT": os.getenv("DB_PORT", "5432"),
     }
 }

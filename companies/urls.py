@@ -2,9 +2,9 @@ from .views import (
     CompanyProfileViewSet,
     RegisterCompanyView,
     StartupViewHistoryViewSet,
-    #FollowStartupView,
-    #ListFollowedStartupsView,
-    #nfollowStartupView,
+    FollowStartupView,
+    ListFollowedStartupsView,
+    UnfollowStartupView,
     UserToCompanyViewSet
 )
 from django.urls import path, include
