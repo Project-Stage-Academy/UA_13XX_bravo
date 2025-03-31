@@ -2,36 +2,26 @@ from .views import (
     CompanyProfileViewSet,
     RegisterCompanyView,
     StartupViewHistoryViewSet,
-    FollowStartupView,
-    ListFollowedStartupsView,
-    UnfollowStartupView,
+    #FollowStartupView,
+    #ListFollowedStartupsView,
+    #nfollowStartupView,
     UserToCompanyViewSet
 )
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_yasg import openapi
-from rest_framework_yasg.views import get_schema_view
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
-schema_view = get_schema_view(
-   openapi.Info(
-      title="Startup API",
-      default_version='v1',
-      description="API для взаємодії з компаніями та історією переглядів стартапів",
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contact@startup.local"),
-      license=openapi.License(name="BSD License"),
-   ),
-   public=True,
-)
-
-urlpatterns = [
-    path('swagger/', schema_view.as_view(), name='swagger-ui'),
+schema_urls = [
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
+
 
 router = DefaultRouter()
 router.register("company", CompanyProfileViewSet, basename="companyprofile")
 router.register("user-to-company", UserToCompanyViewSet, basename="user-to-company")
-router.register("view-history", StartupViewHistoryViewSet, basename="startupviewhistory")
+router.register("startup-view-history", StartupViewHistoryViewSet, basename="startup-view-history")
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -39,7 +29,5 @@ urlpatterns = [
     path("startups/<int:startup_id>/save/", FollowStartupView.as_view(), name="follow-startup"),
     path("investor/saved-startups/", ListFollowedStartupsView.as_view(), name="list-followed-startups"),
     path("startups/<int:startup_id>/unsave/", UnfollowStartupView.as_view(), name="unfollow-startup"),
-    path("companies/view/<int:pk>/", StartupViewHistoryViewSet.as_view({'post': 'mark_as_viewed'}), name="view-startup"),
-    path("companies/viewed", StartupViewHistoryViewSet.as_view({'get': 'list'}), name="viewed-history"),
-    path("companies/viewed/clear", StartupViewHistoryViewSet.as_view({'delete': 'clear_view_history'}), name="clear-view-history"),
+    *schema_urls,
 ]

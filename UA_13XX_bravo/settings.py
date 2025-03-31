@@ -113,6 +113,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "django_extensions",
 ]
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -122,6 +123,13 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
 }
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Startup API",
+    "DESCRIPTION": "API for interacting with companies and startup viewing history",
+    "VERSION": "1.0.0",
+}
+
 SITE_ID = 1
 
 
@@ -168,7 +176,7 @@ DATABASES = {
         "NAME": os.getenv("DB_NAME", "mydatabase"),
         "USER": os.getenv("DB_USER", "admin"),
         "PASSWORD": os.getenv("DB_PASSWORD", "securepassword"),
-        "HOST": os.getenv("DB_HOST", "localhost"),
+        "HOST": os.getenv("DB_HOST", "postgres_db"),
         "PORT": os.getenv("DB_PORT", "5432"),
     }
 }

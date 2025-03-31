@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.utils import timezone ,now
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 
@@ -23,9 +23,8 @@ from .serializers import (
     FollowedStartupSerializer,
     StartupViewHistorySerializer,
 )
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-
+from users.models import UserRole
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes
 
 logger = logging.getLogger(__name__)
 
@@ -100,14 +99,15 @@ def record_view(user, company):
         StartupViewHistory.objects.update_or_create(
             user=user,
             company=company,
-            defaults={"viewed_at": now()}
+            defaults={"viewed_at": timezone.now()}
         )
 
-class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+class StartupViewHistoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint to list, add and clear the viewing history of startup profiles.
     Only authenticated users with a valid company association can access.
     """
+    queryset = StartupViewHistory.objects.all()
     serializer_class = StartupViewHistorySerializer
     permission_classes = [IsAuthenticated]
 
@@ -120,43 +120,90 @@ class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
         if user.role.name != UserRole.INVESTOR:
             raise PermissionDenied("Only investors can perform this action.")
 
-    @swagger_auto_schema(
-        operation_description="Get the view history of a startup for the authenticated user.",
-        responses={200: StartupViewHistorySerializer(many=True)},
-        manual_parameters=[
-            openapi.Parameter('company_id', openapi.IN_QUERY, description="Company ID to filter history", type=openapi.TYPE_INTEGER)
-        ]
+    @extend_schema(
+        description="Get the view history of a startup for the authenticated user.",
+        parameters=[
+            OpenApiParameter(
+                name='company_id',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description="Company ID to filter history"
+            )
+        ],
+        responses={200: StartupViewHistorySerializer(many=True)}
     )
     def get_queryset(self):
-        company_id = self.request.query_params.get("company_id", None)
-        if company_id:
-            self._check_permissions(self.request.user, company_id)  # Check permissions
-        return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
+        return StartupViewHistory.objects.all()
 
-    @swagger_auto_schema(
-        operation_description="Retrieve the details of a startup profile and record the view for the authenticated user.",
-        responses={200: StartupViewHistorySerializer()},
+    @extend_schema(
+        description="Retrieve the details of a startup profile and record the view for the authenticated user.",
+        responses={200: StartupViewHistorySerializer}
     )
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        record_view(request.user, instance)  # Record the view using the record_view function
+        record_view(request.user, instance)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-    @swagger_auto_schema(
-        operation_description="Clear all viewed history for the authenticated user.",
-        responses={200: openapi.Response('Successfully cleared the viewed startup(s).')}
+    @extend_schema(
+        description="Clear all viewed history for the authenticated user.",
+        responses={200: OpenApiTypes.OBJECT}
     )
     @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
     def clear_view_history(self, request):
-        self._check_permissions(request.user)  # Check permissions
-    
-        deleted_count, _ = StartupViewHistory.objects.filter(user=request.user).delete()
-    
+        company_id = request.query_params.get("company_id", None)
+
+        if company_id:
+            self._check_permissions(request.user, company_id)
+            queryset = StartupViewHistory.objects.filter(user=request.user, company_id=company_id)
+        else:
+            self._check_permissions(request.user)
+            queryset = StartupViewHistory.objects.filter(user=request.user)
+
+        deleted_count, _ = queryset.delete()
+        
         if deleted_count == 0:
             return Response({"message": "No viewed startups to clear."}, status=status.HTTP_200_OK)
-    
+
         return Response(
             {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},
             status=status.HTTP_200_OK
         )
+    
+    from django.http import Http404
+
+    @extend_schema(
+        description="Mark a startup as viewed (creates or updates viewed_at).",
+        responses={200: StartupViewHistorySerializer}
+    )
+    @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
+    def mark_as_viewed(self, request, pk=None):
+        try:
+            company = get_object_or_404(CompanyProfile, pk=pk)
+        except (ValueError, TypeError):
+            # If pk is not a number, return 404
+            raise Http404("Invalid startup ID")
+
+        self._check_permissions(request.user, company_id=pk)
+
+        record_view(request.user, company)
+        return Response({"message": "View recorded successfully."}, status=status.HTTP_200_OK)
+    
+    @extend_schema(
+        description="Return the list of viewed startups for the authenticated user.",
+        responses={200: StartupViewHistorySerializer(many=True)}
+    )
+    @action(detail=False, methods=["get"], url_path="viewed", url_name="viewed-history")
+    def viewed(self, request):
+        company_id = request.query_params.get("company_id", None)
+
+        if company_id:
+            self._check_permissions(request.user, company_id)
+            queryset = StartupViewHistory.objects.filter(user=request.user, company_id=company_id)
+        else:
+            self._check_permissions(request.user)
+            queryset = StartupViewHistory.objects.filter(user=request.user)
+
+        queryset = queryset.order_by("-viewed_at")
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
