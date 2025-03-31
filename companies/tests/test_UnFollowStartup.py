@@ -56,8 +56,15 @@ class UnFollowStartupTests(APITestCase):
         self.assertEqual(response.data['detail'], "User is not linked to an enterprise company.")
 
     def test_unfollow_startup_not_found(self):
-        url = f"/api/startups/{5}/unsave/"
+        invalid_id = CompanyProfile.objects.latest("id").id + 999
+        url = f"/api/startups/{invalid_id}/unsave/"
         response = self.client.post(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_unfollow_not_followed_startup(self):
+        other_startup = CompanyProfile.objects.create(company_name="Other", type="startup")
+        url = f"/api/startups/{other_startup.id}/unsave/"
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "You are not following this startup.")
