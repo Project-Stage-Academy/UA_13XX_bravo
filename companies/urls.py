@@ -17,7 +17,6 @@ schema_urls = [
     path("schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
 
-
 router = DefaultRouter()
 router.register("company", CompanyProfileViewSet, basename="companyprofile")
 router.register("user-to-company", UserToCompanyViewSet, basename="user-to-company")
