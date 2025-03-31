@@ -195,18 +195,6 @@ class LoginView(TokenObtainPairView):
     """
     serializer_class = CustomTokenObtainPairSerializer
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-
-        response_data = {
-            "access": data["access"],
-            "refresh": data["refresh"],
-            "company_id": data["company_id"]
-        }
-
-        return Response(response_data)
 
 
 
