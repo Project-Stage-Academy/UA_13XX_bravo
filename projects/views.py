@@ -20,16 +20,15 @@ class ProjectViewSet(ModelViewSet):
                 return super().get_permissions()
 
     def get_queryset(self):
-        company_id = self.request.query_params.get("company_id")
+        company_id = getattr(self.request, "company_id", None)
         if company_id:
             return super().get_queryset().filter(company=company_id)
 
         return super().get_queryset()
 
-    def get_serializer(self, *args, **kwargs):
-        match (self.action):
+    def get_serializer_class(self):
+        match self.action:
             case "create" | "update" | "partial_update":
-                kwargs["context"] = self.get_serializer_context()
-                return ProjectCreateUpdateSerializer(*args, **kwargs)
+                return ProjectCreateUpdateSerializer
             case _:
-                return super().get_serializer(*args, **kwargs)
+                return ProjectListSerializer

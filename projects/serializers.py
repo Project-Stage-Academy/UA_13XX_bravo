@@ -56,14 +56,21 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
         required_funding = attrs.get("required_funding")
         raised_amount = attrs.get("raised_amount")
 
+        errors = {}
+
         if required_funding < 0:
-            raise serializers.ValidationError("Required funding cannot be negative.")
-        if raised_amount < 0:
-            raise serializers.ValidationError("Raised amount cannot be negative.")
-        if raised_amount > required_funding:
-            raise serializers.ValidationError(
-                "Raised amount cannot be greater than required funding."
-            )
+            errors["required_funding"] = "Required funding cannot be negative."
+
+        if raised_amount is not None:
+            if raised_amount < 0:
+                errors["raised_amount"] = "Raised amount cannot be negative."
+            elif raised_amount > required_funding:
+                errors["raised_amount"] = (
+                    "Raised amount cannot be greater than required funding."
+                )
+
+        if errors:
+            raise serializers.ValidationError(errors)
 
         return super().validate(attrs)
 
