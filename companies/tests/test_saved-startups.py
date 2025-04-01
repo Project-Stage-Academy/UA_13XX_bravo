@@ -111,16 +111,3 @@ class SavedStartupsTests(APITestCase):
 
         startup_descriptions = {startup["description"] for startup in response.data}
         self.assertSetEqual(startup_descriptions, {"Company to test products", "AI startup"})
-
-
-        
-
-
-    
-    
-
-    
-
-
-
-    
