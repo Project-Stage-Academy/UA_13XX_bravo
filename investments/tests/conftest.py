@@ -14,3 +14,10 @@ def test_user(db):
         email="apiuser@example.com",
         password="apipass"
     )
+
+@pytest.fixture
+def another_user(db):
+    return User.objects.create_user(
+        email="another@example.com",
+        password="testpass123"
+    )
