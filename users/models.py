@@ -7,22 +7,6 @@ from django.contrib.auth.models import PermissionsMixin
 
 from users.managers import UserManager
 
-class UserRole(models.Model):
-    INVESTOR = "investor"
-    ENTERPRISE = "enterprise"
-    STARTUP = "startup"
-
-    ROLE_CHOICES = [
-        (INVESTOR, "Investor"),
-        (ENTERPRISE, "Enterprise"),
-        (STARTUP, "Startup")
-    ]
-    
-    name = models.CharField(max_length=255, choices=ROLE_CHOICES, unique=True)
-    
-    def __str__(self):
-        return self.name
-
 class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
@@ -40,7 +24,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=255, blank=True, default='')
     phone = PhoneNumberField(blank=True, default='')
 
-    role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
     class Meta:
         verbose_name = 'user'
         verbose_name_plural = 'users'

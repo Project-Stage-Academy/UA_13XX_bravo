@@ -54,7 +54,7 @@ class UserToCompany(models.Model):
     class Meta:
         unique_together = ("user", "company")
         verbose_name_plural = "User to Company"
-
+        
 class CompanyFollowers(models.Model):
     investor = models.ForeignKey(
         CompanyProfile, on_delete=models.CASCADE, related_name="invested_startups",
@@ -94,21 +94,3 @@ class CompanyFollowers(models.Model):
 
     def __str__(self):
         return f"{self.investor.company_name} follows {self.startup.company_name}"
-
-
-class StartupViewHistory(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="viewed_startups"
-    )
-    company = models.ForeignKey(
-        CompanyProfile, on_delete=models.CASCADE, related_name="viewed_by"
-    )
-    viewed_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-viewed_at"]
-        verbose_name_plural = "Startup View History"
-        indexes = [
-            models.Index(fields=['user', 'company']), 
-            models.Index(fields=['viewed_at']),        
-        ]

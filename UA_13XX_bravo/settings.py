@@ -120,7 +120,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "django_extensions",
     'allauth.socialaccount.providers.google',
 
 ]
@@ -157,16 +156,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
 }
-
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Startup API",
-    "DESCRIPTION": "API for interacting with companies and startup viewing history",
-    "VERSION": "1.0.0",
-}
-
 SITE_ID = 1
 
 

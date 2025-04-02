@@ -13,18 +13,16 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 import logging
-from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
+
+from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType 
+# StartupViewHistory
 from .serializers import (
     CompanyProfileSerializer,
     UserToCompanySerializer,
     CompanyFollowersSerializer,
     CompanyRegistrationSerializer,
     FollowedStartupSerializer,
-    StartupViewHistorySerializer,
 )
-from users.models import UserRole
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes
-
 
 logger = logging.getLogger(__name__)
 
@@ -91,119 +89,141 @@ class RegisterCompanyView(CreateAPIView):
 
 
 
-def record_view(user, company):
-    """
-    Record the view of a startup by a user, or update the viewed_at timestamp if the user has already viewed the startup.
-    """
-    if user.is_authenticated:
-        StartupViewHistory.objects.update_or_create(
-            user=user,
-            company=company,
-            defaults={"viewed_at": timezone.now()}
-        )
+    
 
-class StartupViewHistoryViewSet(viewsets.ModelViewSet):
+# class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+#     """
+#     API endpoint to list, add and clear the viewing history of startup profiles.
+#     Only authenticated users can access their own history.
+#     """
+#     serializer_class = StartupViewHistorySerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
+
+#     @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
+#     def mark_as_viewed(self, request, pk=None):
+#         """
+#         Record a view for the specified startup (company) by the authenticated user.
+#         """
+#         try:
+#             company = CompanyProfile.objects.get(pk=pk)
+#         except CompanyProfile.DoesNotExist:
+#             return Response({"detail": "Company not found."}, status=status.HTTP_404_NOT_FOUND)
+
+#         StartupViewHistory.objects.update_or_create(
+#             user=request.user,
+#             company=company,
+#             defaults={"viewed_at": timezone.now()},
+#         )
+
+#         return Response({"detail": "View recorded successfully."}, status=status.HTTP_200_OK)
+
+#     @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
+#     def clear_view_history(self, request):
+#         """
+#         Delete all startup view history records for the authenticated user.
+#         """
+#         deleted_count, _ = StartupViewHistory.objects.filter(user=request.user).delete()
+#         return Response(
+#             {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},
+#             status=status.HTTP_200_OK
+#         )
+class InvestorStartupMixin:
     """
-    API endpoint to list, add and clear the viewing history of startup profiles.
-    Only authenticated users with a valid company association can access.
+    Class for retrieving the investor's company and startup.
     """
-    queryset = StartupViewHistory.objects.all()
-    serializer_class = StartupViewHistorySerializer
+    def get_investor_company(self, request):
+        """Retrieve the investor's enterprise company or raise a permission error."""
+        try:
+            return request.user.company_memberships.get(company__type=CompanyType.ENTERPRISE).company
+        except UserToCompany.DoesNotExist:
+            if not request.user.company_memberships.exists():
+                raise PermissionDenied("User is not associated with any company.")
+            raise PermissionDenied("User is not linked to an enterprise company.")
+    
+    def get_startup(self, startup_id):
+        """Retrieve a startup by ID or raise a not found error."""
+        return get_object_or_404(CompanyProfile, id=startup_id, type=CompanyType.STARTUP)
+
+
+class FollowStartupView(APIView, InvestorStartupMixin):
     permission_classes = [IsAuthenticated]
 
-    def _check_permissions(self, user, company_id=None):
+    def post(self, request, startup_id):
+        """Allow an investor to follow a startup."""
+        investor_company = self.get_investor_company(request)
+        startup = self.get_startup(startup_id)
+
+        if CompanyFollowers.objects.filter(investor=investor_company, startup=startup).exists():
+            return Response({"detail": "You are already following this startup."}, status=status.HTTP_400_BAD_REQUEST)
+
+        follow_relation = CompanyFollowers.objects.create(investor=investor_company, startup=startup)
+        serializer = CompanyFollowersSerializer(follow_relation)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class UnFollowStartupView(APIView, InvestorStartupMixin):
+    """A view that allows an investor to unfollow a startup."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, startup_id):
         """
-        Helper method to check permissions for the current user.
+        Parameters:
+        startup_id (int): The ID of the startup to unfollow.
+
+        Response: 
+        A success message if unfollowed, or an error message.
         """
-        if company_id and not UserToCompany.objects.filter(user=user, company_id=company_id).exists():
-            raise PermissionDenied("You do not have permission to access this company's history.")
-        if user.role.name != UserRole.INVESTOR:
-            raise PermissionDenied("Only investors can perform this action.")
+        investor_company = self.get_investor_company(request)
+        startup = self.get_startup(startup_id)
 
-    @extend_schema(
-        description="Get the view history of a startup for the authenticated user.",
-        parameters=[
-            OpenApiParameter(
-                name='company_id',
-                type=int,
-                location=OpenApiParameter.QUERY,
-                description="Company ID to filter history"
-            )
-        ],
-        responses={200: StartupViewHistorySerializer(many=True)}
-    )
-    def get_queryset(self):
-        return StartupViewHistory.objects.all()
+        unfollow_relation = CompanyFollowers.objects.filter(investor=investor_company, startup=startup)
+        if not unfollow_relation.exists():
+            return Response({"detail": "You are not following this startup."}, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
-        description="Retrieve the details of a startup profile and record the view for the authenticated user.",
-        responses={200: StartupViewHistorySerializer}
-    )
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        record_view(request.user, instance)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        unfollow_relation.delete()
 
-    @extend_schema(
-        description="Clear all viewed history for the authenticated user.",
-        responses={200: OpenApiTypes.OBJECT}
-    )
-    @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
-    def clear_view_history(self, request):
-        company_id = request.query_params.get("company_id", None)
+        return Response({"detail": "Successfully unfollowed the startup."}, status=status.HTTP_200_OK)
+    
+class CustomPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "limit"  
+    max_page_size = 100 
 
-        if company_id:
-            self._check_permissions(request.user, company_id)
-            queryset = StartupViewHistory.objects.filter(user=request.user, company_id=company_id)
-        else:
-            self._check_permissions(request.user)
-            queryset = StartupViewHistory.objects.filter(user=request.user)
+class ListFollowedStartupsView(APIView, InvestorStartupMixin):
+    """
+    A view that lists all followed startups by an investor
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
 
-        deleted_count, _ = queryset.delete()
+    def get(self, request):
+        """
+        Responses:
+        - 200 OK: Returns a list of followed startups.
+        - 400 Bad Request: If the user is not linked to any company or is not an enterprise.
+
+        Example Request:
+        GET /api/investor/saved-startups?search=tech&order_by=-created_at
+        """
+        investor_company = self.get_investor_company(request)
         
-        if deleted_count == 0:
-            return Response({"message": "No viewed startups to clear."}, status=status.HTTP_200_OK)
-
-        return Response(
-            {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},
-            status=status.HTTP_200_OK
+        startups = CompanyProfile.objects.filter(
+            startup_investors__investor=investor_company
         )
-    
-    from django.http import Http404
+        search_query = request.query_params.get("search", None)
+        order = request.query_params.get("order_by", "company_name")
 
-    @extend_schema(
-        description="Mark a startup as viewed (creates or updates viewed_at).",
-        responses={200: StartupViewHistorySerializer}
-    )
-    @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
-    def mark_as_viewed(self, request, pk=None):
-        try:
-            company = get_object_or_404(CompanyProfile, pk=pk)
-        except (ValueError, TypeError):
-            # If pk is not a number, return 404
-            raise Http404("Invalid startup ID")
+        if search_query:
+            startups = startups.filter(company_name__icontains=search_query)
 
-        self._check_permissions(request.user, company_id=pk)
+        allowed_order_fields = ["company_name", "created_at", "description", "updated_at"]
+        if order.lstrip("-") in allowed_order_fields:
+            startups = startups.order_by(order)
 
-        record_view(request.user, company)
-        return Response({"message": "View recorded successfully."}, status=status.HTTP_200_OK)
-    
-    @extend_schema(
-        description="Return the list of viewed startups for the authenticated user.",
-        responses={200: StartupViewHistorySerializer(many=True)}
-    )
-    @action(detail=False, methods=["get"], url_path="viewed", url_name="viewed-history")
-    def viewed(self, request):
-        company_id = request.query_params.get("company_id", None)
-
-        if company_id:
-            self._check_permissions(request.user, company_id)
-            queryset = StartupViewHistory.objects.filter(user=request.user, company_id=company_id)
-        else:
-            self._check_permissions(request.user)
-            queryset = StartupViewHistory.objects.filter(user=request.user)
-
-        queryset = queryset.order_by("-viewed_at")
-        serializer = self.get_serializer(queryset, many=True)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(startups, request)
+        serializer = FollowedStartupSerializer(result_page, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
