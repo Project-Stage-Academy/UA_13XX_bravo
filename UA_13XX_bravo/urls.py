@@ -51,4 +51,5 @@ urlpatterns += [
 
 urlpatterns += [
     path("api/", include("notifications.urls")),
+    path("", include("investments.urls")),
 ]
