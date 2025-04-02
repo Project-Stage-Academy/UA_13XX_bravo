@@ -27,6 +27,7 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path('accounts/', include('allauth.urls')),
 ]
 
 urlpatterns += [
@@ -41,6 +42,7 @@ urlpatterns += [
     path("auth/", include("djoser.urls.jwt")),
     path("auth/", include("users.urls")),
     path("company/", include("companies.urls")),
+    path("api/", include("projects.urls")),
 ]
 urlpatterns += [
     path("api/", include("notifications.urls")),

@@ -13,8 +13,7 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 import logging
-
-from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType, StartupViewHistory
+from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
 from .serializers import (
     CompanyProfileSerializer,
     UserToCompanySerializer,
@@ -25,6 +24,7 @@ from .serializers import (
 )
 from users.models import UserRole
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes
+
 
 logger = logging.getLogger(__name__)
 

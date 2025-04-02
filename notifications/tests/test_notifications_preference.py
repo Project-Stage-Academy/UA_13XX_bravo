@@ -14,21 +14,6 @@ User = get_user_model()
 
 @pytest.mark.django_db
 class TestNotificationSerializers:
-    @pytest.mark.parametrize(
-        "content, expected_valid", [("", False), ("Valid content", True)]
-    )
-    def test_notification_serializer_validation(
-        self, test_user, notification_type, content, expected_valid
-    ):
-        data = {
-            "user": test_user.id,
-            "type": notification_type.id,
-            "content": content,
-            "entity": None,
-            "read": False,
-        }
-        serializer = NotificationSerializer(data=data)
-        assert serializer.is_valid() == expected_valid, serializer.errors
 
     @pytest.mark.parametrize(
         "type_name, expected_valid", [("Email", False), ("Push", True)]

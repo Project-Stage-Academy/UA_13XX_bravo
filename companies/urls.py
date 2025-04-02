@@ -16,6 +16,7 @@ schema_urls = [
     path("schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
+from .views import CompanyProfileViewSet, RegisterCompanyView, UserToCompanyViewSet, FollowStartupView, ListFollowedStartupsView, UnFollowStartupView 
 
 router = DefaultRouter()
 router.register("company", CompanyProfileViewSet, basename="companyprofile")

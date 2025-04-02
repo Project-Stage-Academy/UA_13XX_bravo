@@ -7,6 +7,9 @@ rebuild:
 run:
 	python manage.py runserver
 
+migrate:
+	python manage.py migrate
+
 #make pytest ARGS="notifications/tests"
 #print only the first failure test !!!!!
 pytest:
