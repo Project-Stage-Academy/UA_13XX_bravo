@@ -44,11 +44,6 @@ urlpatterns += [
     path("company/", include("companies.urls")),
     path("api/", include("projects.urls")),
 ]
-
-urlpatterns += [
-    path("api/", include("companies.urls")),
-]
-
 urlpatterns += [
     path("api/", include("notifications.urls")),
 ]

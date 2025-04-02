@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
+from .models import (
+    CompanyProfile,
+    UserToCompany,
+    StartupViewHistory,
+    CompanyFollowers,
+    CompanyType,
+)
 from django.db import transaction    
     
 
@@ -112,6 +118,25 @@ class CompanyRegistrationSerializer(serializers.ModelSerializer):
         return company
 
 
+class StartupViewHistorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for viewing startup profile history.
+
+    Returns a simplified view of the viewing history, including:
+    - startup_id: ID of the viewed company
+    - company_name: Name of the viewed company
+    - viewed_at: Timestamp of the viewing event
+
+    This serializer is intended for read-only usage in history-related endpoints.
+    """
+    startup_id = serializers.IntegerField(source="company.id", read_only=True)
+    company_name = serializers.CharField(source="company.company_name", read_only=True)
+
+    class Meta:
+        model = StartupViewHistory
+        fields = ["startup_id", "company_name", "viewed_at"]
+
+
 class CompanyFollowersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyFollowers
@@ -134,3 +159,4 @@ class FollowedStartupSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyProfile
         fields = ["id", "company_name", "description", "website", "startup_logo"]
+
