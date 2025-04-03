@@ -9,7 +9,6 @@ from .views import (
     UnFollowStartupView 
 )
 
-
 router = DefaultRouter()
 router.register(r"company", CompanyProfileViewSet, basename="companyprofile")
 router.register(r"user-to-company", UserToCompanyViewSet, basename="user-to-company")

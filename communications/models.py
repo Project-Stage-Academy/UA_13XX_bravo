@@ -16,6 +16,7 @@ class ChatRoom(models.Model):  # Create your models here.
         null=True,
     )
     mongo_room_id = models.CharField(max_length=255, unique=True, help_text="MongoDB Room ObjectId or key")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
