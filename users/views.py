@@ -260,7 +260,6 @@ class GoogleOAuthView(APIView):
         if not google_token:
             return Response({"error": "Missing Google token"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Отримуємо дані користувача через Google API
         google_user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
         headers = {"Authorization": f"Bearer {google_token}"}
         response = requests.get(google_user_info_url, headers=headers)
@@ -275,10 +274,8 @@ class GoogleOAuthView(APIView):
         if not email:
             return Response({"error": "Google account must have an email"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. Перевіряємо, чи є користувач у базі, якщо ні — створюємо
         user, created = User.objects.get_or_create(email=email, defaults={"is_active": True, "full_name": name})
 
-        # 3. Генеруємо JWT токени через Djoser
         refresh = RefreshToken.for_user(user)
         tokens = {
             "refresh": str(refresh),
