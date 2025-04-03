@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from projects.models import Project
 from django.core.exceptions import ValidationError
-from django.db.models import Sum as AggregateSum
+from django.db.models import Sum
 
 User = get_user_model()
 
@@ -18,9 +18,9 @@ class Subscription(models.Model):
         related_name="subscriptions"
     )
     project = models.ForeignKey(
-    Project,
-    on_delete=models.CASCADE,
-    related_name="subscriptions"
+        Project,
+        on_delete=models.CASCADE,
+        related_name="subscriptions"
     )
     investment_share = models.DecimalField(
         max_digits=5,           # e.g., allows 100.00
@@ -33,8 +33,12 @@ class Subscription(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def clean(self):
+        # Ensure investment_share does not exceed 2 decimal places
+        if self.investment_share and len(str(self.investment_share).split('.')[-1]) > 2:
+            raise ValidationError("Investment share must have no more than 2 decimal places.")
+        
         if self.project:
             total_share = (
                 Subscription.objects
@@ -46,7 +50,7 @@ class Subscription(models.Model):
                 raise ValidationError("Total investment for this project cannot exceed 100%.")
 
     def save(self, *args, **kwargs):
-        self.full_clean()  # ensure clean() is called
+        self.full_clean()  # Ensure clean() is called before saving
         super().save(*args, **kwargs)
 
     def __str__(self):

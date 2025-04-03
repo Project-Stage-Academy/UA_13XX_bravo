@@ -3,9 +3,13 @@ from .models import Subscription
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Subscription model. 
+    Handles creation and validation of investment shares.
+    """
     class Meta:
         model = Subscription
-        fields = ["id", "investment_share", "created_at", "updated_at"]
+        fields = ["investment_share", "project"]
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate_investment_share(self, value):
