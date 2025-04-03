@@ -114,6 +114,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         Handles receiving a message and saves it in the database.
         """
+        if not hasattr(self, "room"):
+            await self.send_error("Chat room not initialized.")
+            return
         data = json.loads(text_data)
         message_content = data.get("message")
 

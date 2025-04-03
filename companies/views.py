@@ -88,48 +88,6 @@ class RegisterCompanyView(CreateAPIView):
             raise
 
 
-
-    
-
-# class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
-#     """
-#     API endpoint to list, add and clear the viewing history of startup profiles.
-#     Only authenticated users can access their own history.
-#     """
-#     serializer_class = StartupViewHistorySerializer
-#     permission_classes = [IsAuthenticated]
-
-#     def get_queryset(self):
-#         return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
-
-#     @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
-#     def mark_as_viewed(self, request, pk=None):
-#         """
-#         Record a view for the specified startup (company) by the authenticated user.
-#         """
-#         try:
-#             company = CompanyProfile.objects.get(pk=pk)
-#         except CompanyProfile.DoesNotExist:
-#             return Response({"detail": "Company not found."}, status=status.HTTP_404_NOT_FOUND)
-
-#         StartupViewHistory.objects.update_or_create(
-#             user=request.user,
-#             company=company,
-#             defaults={"viewed_at": timezone.now()},
-#         )
-
-#         return Response({"detail": "View recorded successfully."}, status=status.HTTP_200_OK)
-
-#     @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
-#     def clear_view_history(self, request):
-#         """
-#         Delete all startup view history records for the authenticated user.
-#         """
-#         deleted_count, _ = StartupViewHistory.objects.filter(user=request.user).delete()
-#         return Response(
-#             {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},
-#             status=status.HTTP_200_OK
-#         )
 class InvestorStartupMixin:
     """
     Class for retrieving the investor's company and startup.
@@ -188,7 +146,7 @@ class UnFollowStartupView(APIView, InvestorStartupMixin):
         return Response({"detail": "Successfully unfollowed the startup."}, status=status.HTTP_200_OK)
     
 class CustomPagination(PageNumberPagination):
-    page_size = 1
+    page_size = 5
     page_size_query_param = "limit"  
     max_page_size = 100 
 
@@ -221,9 +179,50 @@ class ListFollowedStartupsView(APIView, InvestorStartupMixin):
 
         allowed_order_fields = ["company_name", "created_at", "description", "updated_at"]
         if order.lstrip("-") in allowed_order_fields:
-            startups = startups.order_by(order)
+          startups = startups.order_by(order)
 
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(startups, request)
         serializer = FollowedStartupSerializer(result_page, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+      
+# class StartupViewHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+#     """
+#     API endpoint to list, add and clear the viewing history of startup profiles.
+#     Only authenticated users can access their own history.
+#     """
+#     serializer_class = StartupViewHistorySerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         return StartupViewHistory.objects.filter(user=self.request.user).order_by("-viewed_at")
+
+#     @action(detail=True, methods=["post"], url_path="view", url_name="mark-viewed")
+#     def mark_as_viewed(self, request, pk=None):
+#         """
+#         Record a view for the specified startup (company) by the authenticated user.
+#         """
+#         try:
+#             company = CompanyProfile.objects.get(pk=pk)
+#         except CompanyProfile.DoesNotExist:
+#             return Response({"detail": "Company not found."}, status=status.HTTP_404_NOT_FOUND)
+
+#         StartupViewHistory.objects.update_or_create(
+#             user=request.user,
+#             company=company,
+#             defaults={"viewed_at": timezone.now()},
+#         )
+
+#         return Response({"detail": "View recorded successfully."}, status=status.HTTP_200_OK)
+
+#     @action(detail=False, methods=["delete"], url_path="clear", url_name="clear-history")
+#     def clear_view_history(self, request):
+#         """
+#         Delete all startup view history records for the authenticated user.
+#         """
+#         deleted_count, _ = StartupViewHistory.objects.filter(user=request.user).delete()
+#         return Response(
+#             {"message": f"Successfully cleared {deleted_count} viewed startup(s)."},
+#             status=status.HTTP_200_OK
+#         )
+
