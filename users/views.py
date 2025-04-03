@@ -25,6 +25,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import serializers
 import logging
+import requests
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -235,3 +238,51 @@ class CustomJWTAuthentication(JWTAuthentication):
             setattr(request, "company_id", company_id)
             
         return (user, token)
+
+import requests
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+
+User = get_user_model()
+
+class GoogleOAuthView(APIView):
+    """
+    Handle Google OAuth login and JWT token issuance.
+    """
+
+    def post(self, request):
+        google_token = request.data.get("token")
+
+        if not google_token:
+            return Response({"error": "Missing Google token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Отримуємо дані користувача через Google API
+        google_user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+        headers = {"Authorization": f"Bearer {google_token}"}
+        response = requests.get(google_user_info_url, headers=headers)
+
+        if response.status_code != 200:
+            return Response({"error": "Failed to retrieve Google user info"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_data = response.json()
+        email = user_data.get("email")
+        name = user_data.get("name")
+
+        if not email:
+            return Response({"error": "Google account must have an email"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Перевіряємо, чи є користувач у базі, якщо ні — створюємо
+        user, created = User.objects.get_or_create(email=email, defaults={"is_active": True, "full_name": name})
+
+        # 3. Генеруємо JWT токени через Djoser
+        refresh = RefreshToken.for_user(user)
+        tokens = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
+
+        return Response({"message": "Login successful", "tokens": tokens}, status=status.HTTP_200_OK)
