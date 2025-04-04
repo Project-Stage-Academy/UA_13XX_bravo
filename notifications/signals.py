@@ -3,30 +3,28 @@ from django.dispatch import receiver
 from .models import Notification, Type
 from companies.models import CompanyFollowers, CompanyProfile, UserToCompany
 from django.contrib.auth import get_user_model
-from .utils import send_email_notification
 from django.core.mail import send_mail
+from .tasks import send_notification_task
+from communications.models import ChatRoom
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+
 def send_notification_and_email(user, notif_type_name, content):
     """
     Creates a notification and sends an email to the user.
-    
+
     :param user: User who will receive the notification
     :param notif_type_name: Name of the notification type (e.g., "new_follower", "new_post")
     :param content: Notification message content
     """
     try:
         notif_type, _ = Type.objects.get_or_create(name=notif_type_name)
-        
-        Notification.objects.create(
-            user=user,
-            type=notif_type,
-            content=content
-        )
+
+        Notification.objects.create(user=user, type=notif_type, content=content)
 
         send_mail(
             subject=f"Notification: {notif_type_name}",
@@ -38,11 +36,12 @@ def send_notification_and_email(user, notif_type_name, content):
     except Exception as e:
         logger.error(f"Error creating {notif_type_name} notification: {e}")
 
+
 # @receiver(post_save, sender=CompanyFollowers)
 # def create_notification_for_new_follower(sender, instance, created, **kwargs):
 #     if not created:
 #         return
-    
+
 #     content = f"{instance.investor.company_name} started following {instance.startup.company_name}"
 #     send_notification_and_email(investor_user, "new_follower", content) # need to update logic for connecting to the user  (use CompanyFollowers model)
 
@@ -51,7 +50,7 @@ def send_notification_and_email(user, notif_type_name, content):
 def notify_followers_on_update(sender, instance, created, **kwargs):
     if created:
         return
-    
+
     followers = CompanyFollowers.objects.filter(startup=instance)
     for follow in followers:
         investor_user = UserToCompany.objects.filter(company=follow.investor).first()
@@ -59,3 +58,19 @@ def notify_followers_on_update(sender, instance, created, **kwargs):
             content = f"{instance.company_name} updated their profile."
             send_notification_and_email(investor_user.user, "new_post", content)
             print(send_notification_and_email)
+
+
+@receiver(post_save, sender=Notification)
+def send_notification_via_channels(sender, instance, created, **kwargs):
+    logger.debug(
+        f"send_notification_via_channels: sender={sender}, instance={instance}, created={created}, kwargs={kwargs}"
+    )
+    if created:
+        room_id = 1
+        notification_data = {
+            "user": "test_user",
+            "message": "test",
+            "is_read": False,
+        }
+        # Offload the notification to Celery task
+        send_notification_task.delay(room_id, notification_data)
