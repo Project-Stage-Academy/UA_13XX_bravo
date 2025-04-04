@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Applying database migrations..."
-python manage.py migrate --no-input
+python manage.py migrate --noinput
 
 echo "Loading initial data..."
 python manage.py loaddata notifications/fixtures/type_fixture.json
