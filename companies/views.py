@@ -14,8 +14,7 @@ from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 import logging
 
-from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType 
-# StartupViewHistory
+from .models import CompanyProfile, UserToCompany, CompanyFollowers, CompanyType
 from .serializers import (
     CompanyProfileSerializer,
     UserToCompanySerializer,
