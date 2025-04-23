@@ -1,30 +1,31 @@
 """
 ASGI config for UA_13XX_bravo project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
+import django
+import logging
 
-from django.core.asgi import get_asgi_application
+# Set up basic logging
+logger = logging.getLogger("django")
 
-from channels.routing import ProtocolTypeRouter, URLRouter
-from django.core.asgi import get_asgi_application
-import communications.routing
-from communications.middleware.jwt_auth import JWTAuthMiddleware
-
+# Set the default Django settings module for ASGI
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "UA_13XX_bravo.settings")
 
-django_asgi_app = get_asgi_application()
+# Initialize Django before importing anything that touches models/apps
+django.setup()
 
+from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from communications.middleware.jwt_auth import JWTAuthMiddleware
+from communications.routing import websocket_urlpatterns  # Safe to import now
+
+logger.debug(f"WebSocket routes loaded: {websocket_urlpatterns}")
+
+# Define the ASGI application
 application = ProtocolTypeRouter(
     {
-        "http": django_asgi_app,
-        "websocket": JWTAuthMiddleware(
-            URLRouter(communications.routing.websocket_urlpatterns)
-        ),
+        "http": get_asgi_application(),
+        "websocket": JWTAuthMiddleware(URLRouter(websocket_urlpatterns)),
     }
 )

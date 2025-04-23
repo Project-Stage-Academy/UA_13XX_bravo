@@ -1,5 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
 
 from django.db.utils import IntegrityError
 from communications.models import ChatRoom
@@ -8,6 +10,30 @@ from asgiref.sync import sync_to_async
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class RoomConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+
+        error = self.scope.get("auth_error")  # from middlware
+        if error:
+            await self.accept()
+            await self.send_error(error)
+            return
+
+        self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
+        self.room_group_name = f"chat_{self.room_id}"
+
+        logger.debug(f"[WS] Connected to group chat_{self.room_id}")
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def send_notification(self, event):
+        logger.debug(f"[WS] Sending notification to WS: {event['notification']}")
+        await self.send_json(event["notification"])
 
 
 class ChatConsumer(AsyncWebsocketConsumer):

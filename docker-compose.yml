@@ -6,6 +6,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "8000:8000"
     volumes:
@@ -30,9 +32,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
-      retries: 10  # Increased retries
+      retries: 10 # Increased retries
       timeout: 5s
-      start_period: 20s  # Wait before the first check
+      start_period: 20s # Wait before the first check
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -41,9 +43,6 @@ services:
     container_name: pgadmin
     restart: always
     env_file: .env
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
@@ -52,7 +51,24 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery_worker:
+    build: .
+    user: celeryuser
+    depends_on:
+      - redis
+      - django
+    command: celery -A UA_13XX_bravo worker --loglevel=info
+    volumes:
+      - .:/app
+
 volumes:
   postgres_data:
   static_volume:
   pgadmin_data:
+  redis:
+  celery_worker:
